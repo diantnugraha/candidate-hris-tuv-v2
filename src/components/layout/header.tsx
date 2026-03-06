@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Bell, Search, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAppStore } from "@/stores/app-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
@@ -34,24 +34,13 @@ interface HeaderProps {
 export function Header({ title, subtitle }: HeaderProps) {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
-  const { user, logout, isLoading } = useAuthStore();
+  const { logout, isLoading } = useAuthStore();
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
 
   const handleSignOut = async () => {
     await logout();
     setShowLogoutDialog(false);
     router.push("/login");
-  };
-
-  const getUserInitials = () => {
-    if (user?.name) {
-      const names = user.name.split(" ");
-      if (names.length >= 2) {
-        return `${names[0][0]}${names[1][0]}`.toUpperCase();
-      }
-      return user.name.substring(0, 2).toUpperCase();
-    }
-    return "U";
   };
 
   return (
@@ -116,40 +105,27 @@ export function Header({ title, subtitle }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 gap-2 px-2">
-              <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-accent text-xs text-white">
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden text-sm font-medium md:inline-block">
-                {user?.name || "User"}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span className="font-medium">{user?.name || "User"}</span>
-                <span className="text-xs text-gray-500">{user?.email || ""}</span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setShowLogoutDialog(true)}
-              className="text-red-600"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* TUV-Nord Logo & Logout */}
+        <div className="flex items-center gap-3 pl-2 border-l border-gray-200">
+          <Image
+            src="/images/tuv-nord-logo.png"
+            alt="TUV Nord"
+            width={100}
+            height={32}
+            className="h-8 w-auto object-contain"
+          />
+
+          {/* Logout Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowLogoutDialog(true)}
+            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* Logout Dialog */}
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>

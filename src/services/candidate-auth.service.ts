@@ -4,28 +4,28 @@ import { post, get, put } from "@/lib/axios";
 
 export interface Candidate {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullname: string;
   email: string;
-  phone: string;
-  status: string;
-  source: string | null;
-  currentCompany: string | null;
-  currentPosition: string | null;
-  expectedSalary: number | null;
-  noticePeriod: string | null;
-  resumeUrl: string | null;
-  linkedinUrl: string | null;
-  portfolioUrl: string | null;
-  notes: string | null;
-  appliedDate: string;
-  jobTitleId: string | null;
-  departmentId: string | null;
-  verified: boolean;
-  createdAt: string;
-  updatedAt: string;
-  jobTitle?: { id: number; name: string } | null;
-  department?: { id: number; name: string; code: string } | null;
+  address: string;
+  residentStatus: string;
+  birthPlace: string;
+  birthDate: string | null;
+  religion: string;
+  ethnicGroup: string;
+  idNo: string;
+  taxId: string;
+  bpjsId: string;
+  citizenship: string;
+  marritalStatus: string;
+  gender: string;
+  mobilePhone: string;
+  drivingLicense: string;
+  verify: string;
+  agreementAcceptedAt: string | null;
+  agreementVersion: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  candidateCode: string | null;
 }
 
 export interface ApiResponse<T> {
@@ -41,7 +41,7 @@ export interface CandidateAuthResponse {
 
 export interface CandidateLoginRequest {
   email: string;
-  token: string;
+  password: string;
 }
 
 export interface CandidateProfileUpdateRequest {
@@ -60,28 +60,28 @@ export interface CandidateProfileUpdateRequest {
 
 interface ApiCandidate {
   id: number;
-  first_name: string;
-  last_name: string;
+  fullname: string;
   email: string;
-  phone: string | null;
-  status: string;
-  source: string | null;
-  current_company: string | null;
-  current_position: string | null;
-  expected_salary: number | null;
-  notice_period: string | null;
-  resume_url: string | null;
-  linkedin_url: string | null;
-  portfolio_url: string | null;
-  notes: string | null;
-  applied_date: string;
-  job_title_id: number | null;
-  department_id: number | null;
-  verified: boolean;
-  created_at: string;
-  updated_at: string;
-  job_title?: { id: number; name: string } | null;
-  department?: { id: number; name: string; code: string } | null;
+  address: string;
+  resident_status: string;
+  birth_place: string;
+  birth_date: string | null;
+  religion: string;
+  ethnic_group: string;
+  id_no: string;
+  tax_id: string;
+  bpjs_id: string;
+  citizenship: string;
+  marrital_status: string;
+  gender: string;
+  mobile_phone: string;
+  driving_license: string;
+  verify: string;
+  agreement_accepted_at: string | null;
+  agreement_version: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  candidate_code: string | null;
 }
 
 // --- Mapping ---
@@ -89,28 +89,28 @@ interface ApiCandidate {
 function mapCandidate(api: ApiCandidate): Candidate {
   return {
     id: String(api.id),
-    firstName: api.first_name,
-    lastName: api.last_name,
+    fullname: api.fullname,
     email: api.email,
-    phone: api.phone || "",
-    status: api.status,
-    source: api.source,
-    currentCompany: api.current_company,
-    currentPosition: api.current_position,
-    expectedSalary: api.expected_salary,
-    noticePeriod: api.notice_period,
-    resumeUrl: api.resume_url,
-    linkedinUrl: api.linkedin_url,
-    portfolioUrl: api.portfolio_url,
-    notes: api.notes,
-    appliedDate: api.applied_date,
-    jobTitleId: api.job_title_id ? String(api.job_title_id) : null,
-    departmentId: api.department_id ? String(api.department_id) : null,
-    verified: api.verified,
+    address: api.address || "",
+    residentStatus: api.resident_status || "",
+    birthPlace: api.birth_place || "",
+    birthDate: api.birth_date,
+    religion: api.religion || "",
+    ethnicGroup: api.ethnic_group || "",
+    idNo: api.id_no || "",
+    taxId: api.tax_id || "",
+    bpjsId: api.bpjs_id || "",
+    citizenship: api.citizenship || "",
+    marritalStatus: api.marrital_status || "",
+    gender: api.gender || "",
+    mobilePhone: api.mobile_phone || "",
+    drivingLicense: api.driving_license || "",
+    verify: api.verify,
+    agreementAcceptedAt: api.agreement_accepted_at,
+    agreementVersion: api.agreement_version,
     createdAt: api.created_at,
     updatedAt: api.updated_at,
-    jobTitle: api.job_title,
-    department: api.department,
+    candidateCode: api.candidate_code,
   };
 }
 
@@ -152,11 +152,11 @@ export const candidateAuthService = {
     }
   },
 
-  async verifyToken(email: string, token: string): Promise<ApiResponse<{ valid: boolean }>> {
+  async verifyPassword(email: string, password: string): Promise<ApiResponse<{ valid: boolean }>> {
     try {
-      const response = await post<unknown, { email: string; token: string }>(
+      const response = await post<unknown, { email: string; password: string }>(
         "/v1/candidate-auth/verify",
-        { email, token }
+        { email, password }
       );
       const res = response as { success?: boolean; data?: { valid: boolean } };
 
@@ -205,6 +205,28 @@ export const candidateAuthService = {
       return {
         success: false,
         message: err.response?.data?.message || "Failed to update profile",
+      };
+    }
+  },
+
+  async acceptAgreement(version?: string): Promise<ApiResponse<Candidate>> {
+    try {
+      const response = await post<unknown, { version?: string }>(
+        "/v1/candidate-auth/agreement",
+        { version }
+      );
+      const res = response as { success?: boolean; data?: ApiCandidate; message?: string };
+
+      if (res.success && res.data) {
+        return { success: true, data: mapCandidate(res.data) };
+      }
+
+      return { success: false, message: res.message || "Failed to accept agreement" };
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to accept agreement",
       };
     }
   },

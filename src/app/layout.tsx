@@ -11,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "QuoHRIS - HR Management System",
+  title: "Candidate - Candidate Portal",
   description: "Modern HR Management System for efficient workforce management",
 };
 

@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   User,
   GraduationCap,
@@ -33,6 +35,7 @@ import {
   FileText,
   Download,
   ScrollText,
+  LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -77,6 +80,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import type {
   EducationalBackground,
   WorkExperience,
@@ -139,9 +143,41 @@ const onboardingProgramData: { program: string; date: string; location: string; 
 ];
 
 export default function CandidateProfilePage() {
+  const router = useRouter();
+  const { logout, user, acceptAgreement } = useAuthStore();
+
+  // Get initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setShowLogoutDialog(false);
+    router.push("/login");
+  };
+
+  const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [hasConsented, setHasConsented] = React.useState(false);
   const [consentChecked, setConsentChecked] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [isAcceptingAgreement, setIsAcceptingAgreement] = React.useState(false);
+
+  // Check if user has already accepted agreement on mount
+  React.useEffect(() => {
+    if (user?.agreementAcceptedAt) {
+      setHasConsented(true);
+      setCurrentStep(1);
+      setCompletedSteps(new Set([0]));
+    }
+  }, [user?.agreementAcceptedAt]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [isAccepted, setIsAccepted] = React.useState(false);
@@ -372,10 +408,18 @@ export default function CandidateProfilePage() {
     setTrainingDialogOpen(false);
   };
 
-  const handleConsent = () => {
-    setHasConsented(true);
-    setCompletedSteps((prev) => new Set(prev).add(0));
-    goToStep(1);
+  const handleConsent = async () => {
+    setIsAcceptingAgreement(true);
+    try {
+      const success = await acceptAgreement();
+      if (success) {
+        setHasConsented(true);
+        setCompletedSteps((prev) => new Set(prev).add(0));
+        goToStep(1);
+      }
+    } finally {
+      setIsAcceptingAgreement(false);
+    }
   };
 
   return (
@@ -385,24 +429,53 @@ export default function CandidateProfilePage() {
       <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent shadow-sm shadow-accent/25">
-              <span className="text-sm font-bold text-white">Q</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-semibold text-foreground">QuoHRIS</p>
-              <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Candidate Portal</p>
-            </div>
+            <Image
+              src="/images/tuv-nord-logo.png"
+              alt="TUV Nord"
+              width={120}
+              height={40}
+              className="h-10 w-auto object-contain"
+            />
           </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="border-accent/30 bg-accent/5 text-accent font-medium px-3 py-1">
-              AP.2602110001
-            </Badge>
-            <div className="h-8 w-px bg-border" />
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/70 shadow-sm">
-                <span className="text-[11px] font-semibold text-white">GA</span>
+                <span className="text-[11px] font-semibold text-white">{user?.name ? getInitials(user.name) : "?"}</span>
               </div>
-              <span className="hidden text-sm font-medium text-muted-foreground sm:inline">Guest</span>
+              <div className="hidden flex-col sm:flex">
+                <span className="text-sm font-medium text-muted-foreground">{user?.name || "-"}</span>
+                <span className="text-xs text-muted-foreground/70">{user?.email || ""}</span>
+              </div>
+              <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                    title="Logout"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Sign out</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to sign out from your account?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isLoggingOut}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isLoggingOut ? "Signing out..." : "Sign out"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>
@@ -484,7 +557,7 @@ export default function CandidateProfilePage() {
                   <div className="space-y-5">
                     <div className="space-y-4 text-sm leading-relaxed text-foreground/80">
                       <p>
-                        Dengan ini, saya menyatakan memberikan persetujuan secara sukarela kepada <span className="font-semibold text-foreground">PT TUV NORD Indonesia</span> untuk
+                        Dengan ini, saya menyatakan memberikan persetujuan secara sukarela kepada <span className="font-semibold text-foreground">PT TÜV NORD Indonesia</span> untuk
                         mengumpulkan, menyimpan, mengolah, dan menggunakan data pribadi saya yang telah saya isi dalam formulir biodata ini.
                         Saya memahami bahwa data pribadi tersebut akan digunakan untuk:
                       </p>
@@ -497,7 +570,7 @@ export default function CandidateProfilePage() {
 
                       <p>
                         Saya juga memahami bahwa data pribadi saya hanya akan diakses oleh pihak-pihak yang berwenang di
-                        PT TUV NORD Indonesia dan tidak akan dibagikan kepada pihak ketiga tanpa persetujuan saya, kecuali
+                        PT TÜV NORD Indonesia dan tidak akan dibagikan kepada pihak ketiga tanpa persetujuan saya, kecuali
                         jika diwajibkan oleh peraturan perundang-undangan yang berlaku:
                       </p>
 
@@ -528,8 +601,15 @@ export default function CandidateProfilePage() {
                           <Button variant="destructive" onClick={() => window.history.back()} className="h-10">
                             Tidak Setuju
                           </Button>
-                          <Button onClick={handleConsent} disabled={!consentChecked} className="h-10">
-                            Setuju &amp; Lanjutkan
+                          <Button onClick={handleConsent} disabled={!consentChecked || isAcceptingAgreement} className="h-10">
+                            {isAcceptingAgreement ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Menyimpan...
+                              </>
+                            ) : (
+                              "Setuju & Lanjutkan"
+                            )}
                           </Button>
                         </div>
                       </>

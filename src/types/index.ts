@@ -3,11 +3,13 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "hr" | "manager" | "employee";
+  role: "admin" | "hr" | "manager" | "employee" | "candidate";
   avatar?: string;
   employeeId?: string;
-  createdAt: string;
-  updatedAt: string;
+  candidateCode?: string | null;
+  agreementAcceptedAt?: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface LoginRequest {

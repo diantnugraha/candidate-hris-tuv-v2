@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export const api = axios.create({
   baseURL,
@@ -16,7 +16,7 @@ api.interceptors.request.use(
   (config) => {
     // Get token from localStorage if available
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("candidate_auth_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -36,9 +36,9 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access - but not for auth endpoints
-      const isAuthEndpoint = error.config?.url?.startsWith("/auth/");
+      const isAuthEndpoint = error.config?.url?.includes("/candidate-auth/");
       if (typeof window !== "undefined" && !isAuthEndpoint) {
-        localStorage.removeItem("auth_token");
+        localStorage.removeItem("candidate_auth_token");
         window.location.href = "/login";
       }
     }
