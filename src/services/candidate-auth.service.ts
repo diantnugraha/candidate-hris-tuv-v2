@@ -81,21 +81,21 @@ export interface CandidatePersonalInfoFormData {
 
 interface CandidatePersonalInfoRequest {
   fullname?: string;
-  idNo?: string;
-  taxId?: string;
+  id_no?: string;
+  tax_id?: string;
   citizenship?: string;
-  bpjsId?: string;
+  bpjs_id?: string;
   religion?: string;
-  mobilePhone?: string;
+  mobile_phone?: string;
   address?: string;
-  domicileAddress?: string;
-  drivingLicense?: string;
-  birthPlace?: string;
-  residentStatus?: string;
-  birthDate?: string | null;
-  uniformShirtSize?: string;
-  marritalStatus?: string;
-  uniformPantsSize?: string;
+  domicile_address?: string;
+  driving_license?: string;
+  birth_place?: string;
+  resident_status?: string;
+  birth_date?: string | null;
+  uniform_shirt_size?: string;
+  marrital_status?: string;
+  uniform_pants_size?: string;
 }
 
 // --- API Response Types ---
@@ -263,21 +263,21 @@ export const candidateAuthService = {
     try {
       const payload: CandidatePersonalInfoRequest = {
         fullname: data.fullName,
-        idNo: data.idNumber,
-        taxId: data.taxIdNumber,
+        id_no: data.idNumber,
+        tax_id: data.taxIdNumber,
         citizenship: data.nationality,
-        bpjsId: data.bpjsNumber,
+        bpjs_id: data.bpjsNumber,
         religion: data.religion,
-        mobilePhone: data.mobilePhone,
+        mobile_phone: data.mobilePhone,
         address: data.address,
-        domicileAddress: data.domicileAddress,
-        drivingLicense: data.drivingLicense,
-        birthPlace: data.birthPlace,
-        residentStatus: data.residentialStatus,
-        birthDate: data.birthDate || null,
-        uniformShirtSize: data.uniformShirtSize,
-        marritalStatus: data.maritalStatus,
-        uniformPantsSize: data.uniformPantsSize,
+        domicile_address: data.domicileAddress,
+        driving_license: data.drivingLicense,
+        birth_place: data.birthPlace,
+        resident_status: data.residentialStatus,
+        birth_date: data.birthDate || null,
+        uniform_shirt_size: data.uniformShirtSize,
+        marrital_status: data.maritalStatus,
+        uniform_pants_size: data.uniformPantsSize,
       };
 
       const response = await put<unknown, CandidatePersonalInfoRequest>(
