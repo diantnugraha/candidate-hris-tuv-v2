@@ -19,7 +19,10 @@ export interface Candidate {
   marritalStatus: string;
   gender: string;
   mobilePhone: string;
+  domicileAddress: string;
   drivingLicense: string;
+  uniformShirtSize: string;
+  uniformPantsSize: string;
   verify: string;
   agreementAcceptedAt: string | null;
   agreementVersion: string | null;
@@ -56,6 +59,45 @@ export interface CandidateProfileUpdateRequest {
   notes?: string;
 }
 
+export interface CandidatePersonalInfoFormData {
+  fullName: string;
+  idNumber: string;
+  taxIdNumber: string;
+  nationality: string;
+  bpjsNumber: string;
+  religion: string;
+  mobilePhone: string;
+  address: string;
+  personalEmail: string;
+  domicileAddress: string;
+  drivingLicense: string;
+  birthPlace: string;
+  residentialStatus: string;
+  birthDate: string;
+  uniformShirtSize: string;
+  maritalStatus: string;
+  uniformPantsSize: string;
+}
+
+interface CandidatePersonalInfoRequest {
+  fullname?: string;
+  idNo?: string;
+  taxId?: string;
+  citizenship?: string;
+  bpjsId?: string;
+  religion?: string;
+  mobilePhone?: string;
+  address?: string;
+  domicileAddress?: string;
+  drivingLicense?: string;
+  birthPlace?: string;
+  residentStatus?: string;
+  birthDate?: string | null;
+  uniformShirtSize?: string;
+  marritalStatus?: string;
+  uniformPantsSize?: string;
+}
+
 // --- API Response Types ---
 
 interface ApiCandidate {
@@ -75,7 +117,10 @@ interface ApiCandidate {
   marrital_status: string;
   gender: string;
   mobile_phone: string;
+  domicile_address: string;
   driving_license: string;
+  uniform_shirt_size: string;
+  uniform_pants_size: string;
   verify: string;
   agreement_accepted_at: string | null;
   agreement_version: string | null;
@@ -104,7 +149,10 @@ function mapCandidate(api: ApiCandidate): Candidate {
     marritalStatus: api.marrital_status || "",
     gender: api.gender || "",
     mobilePhone: api.mobile_phone || "",
+    domicileAddress: api.domicile_address || "",
     drivingLicense: api.driving_license || "",
+    uniformShirtSize: api.uniform_shirt_size || "",
+    uniformPantsSize: api.uniform_pants_size || "",
     verify: api.verify,
     agreementAcceptedAt: api.agreement_accepted_at,
     agreementVersion: api.agreement_version,
@@ -205,6 +253,49 @@ export const candidateAuthService = {
       return {
         success: false,
         message: err.response?.data?.message || "Failed to update profile",
+      };
+    }
+  },
+
+  async updatePersonalInfo(
+    data: CandidatePersonalInfoFormData
+  ): Promise<ApiResponse<Candidate>> {
+    try {
+      const payload: CandidatePersonalInfoRequest = {
+        fullname: data.fullName,
+        idNo: data.idNumber,
+        taxId: data.taxIdNumber,
+        citizenship: data.nationality,
+        bpjsId: data.bpjsNumber,
+        religion: data.religion,
+        mobilePhone: data.mobilePhone,
+        address: data.address,
+        domicileAddress: data.domicileAddress,
+        drivingLicense: data.drivingLicense,
+        birthPlace: data.birthPlace,
+        residentStatus: data.residentialStatus,
+        birthDate: data.birthDate || null,
+        uniformShirtSize: data.uniformShirtSize,
+        marritalStatus: data.maritalStatus,
+        uniformPantsSize: data.uniformPantsSize,
+      };
+
+      const response = await put<unknown, CandidatePersonalInfoRequest>(
+        "/v1/candidate-auth/profile",
+        payload
+      );
+      const res = response as { success?: boolean; data?: ApiCandidate; message?: string };
+
+      if (res.success && res.data) {
+        return { success: true, data: mapCandidate(res.data) };
+      }
+
+      return { success: false, message: res.message || "Failed to save personal information" };
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to save personal information",
       };
     }
   },

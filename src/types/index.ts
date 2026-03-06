@@ -386,7 +386,6 @@ export interface BudgetCalculation {
 }
 
 // Candidate Profile Types
-export type Gender = "male" | "female";
 export type DrivingLicense = "A" | "B1" | "B2" | "C" | "D" | "none";
 export type ResidentialStatus = "own" | "rent" | "family" | "company" | "other";
 export type ShirtSize = "S" | "M" | "L" | "XL" | "XXL" | "other";
@@ -399,13 +398,10 @@ export interface CandidateProfile {
   // Personal Information
   fullName: string;
   idNumber: string;
-  city: string;
   taxIdNumber: string;
   nationality: string;
-  bpjsKesehatanNumber: string;
+  bpjsNumber: string;
   religion: string;
-  bpjsKetenagakerjaanNumber: string;
-  ethnicGroup: string;
   mobilePhone: string;
   address: string;
   personalEmail: string;
@@ -413,8 +409,6 @@ export interface CandidateProfile {
   drivingLicense?: DrivingLicense;
   birthPlace: string;
   residentialStatus: ResidentialStatus;
-  gender: Gender;
-  numberOfDependents: number;
   birthDate: string;
   uniformShirtSize: ShirtSize;
   maritalStatus: MaritalStatus;

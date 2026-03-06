@@ -81,6 +81,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { candidateAuthService } from "@/services/candidate-auth.service";
+import { toast } from "sonner";
 import type {
   EducationalBackground,
   WorkExperience,
@@ -144,7 +146,7 @@ const onboardingProgramData: { program: string; date: string; location: string; 
 
 export default function CandidateProfilePage() {
   const router = useRouter();
-  const { logout, user, acceptAgreement } = useAuthStore();
+  const { logout, user, acceptAgreement, updateUser } = useAuthStore();
 
   // Get initials from name
   const getInitials = (name: string) => {
@@ -196,13 +198,10 @@ export default function CandidateProfilePage() {
   const [formData, setFormData] = React.useState({
     fullName: "",
     idNumber: "",
-    city: "",
     taxIdNumber: "",
     nationality: "",
-    bpjsKesehatanNumber: "",
+    bpjsNumber: "",
     religion: "",
-    bpjsKetenagakerjaanNumber: "",
-    ethnicGroup: "",
     mobilePhone: "",
     address: "",
     personalEmail: "",
@@ -210,13 +209,54 @@ export default function CandidateProfilePage() {
     drivingLicense: "",
     birthPlace: "",
     residentialStatus: "",
-    gender: "",
-    numberOfDependents: 0,
     birthDate: "",
     uniformShirtSize: "",
     maritalStatus: "",
     uniformPantsSize: "",
   });
+
+  const [profileLoading, setProfileLoading] = React.useState(true);
+  const [profileError, setProfileError] = React.useState<string | null>(null);
+
+  const fetchProfile = React.useCallback(async () => {
+    setProfileLoading(true);
+    setProfileError(null);
+    try {
+      const response = await candidateAuthService.getProfile();
+      if (response.success && response.data) {
+        const c = response.data;
+        setFormData({
+          fullName: c.fullname,
+          idNumber: c.idNo,
+          taxIdNumber: c.taxId,
+          nationality: c.citizenship,
+          bpjsNumber: c.bpjsId,
+          religion: c.religion,
+          mobilePhone: c.mobilePhone,
+          address: c.address,
+          personalEmail: c.email,
+          domicileAddress: c.domicileAddress || "",
+          drivingLicense: c.drivingLicense || "",
+          birthPlace: c.birthPlace,
+          residentialStatus: c.residentStatus?.toLowerCase() || "",
+          birthDate: c.birthDate || "",
+          uniformShirtSize: c.uniformShirtSize?.toLowerCase() || "",
+          maritalStatus: c.marritalStatus?.toLowerCase() || "",
+          uniformPantsSize: c.uniformPantsSize?.toLowerCase() || "",
+        });
+      } else {
+        setProfileError(response.message || "Failed to load profile");
+      }
+    } catch {
+      setProfileError("Failed to load profile");
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const [educationalBackground, setEducationalBackground] = React.useState<EducationalBackground[]>([]);
   const [workExperience, setWorkExperience] = React.useState<WorkExperience[]>([]);
@@ -268,8 +308,60 @@ export default function CandidateProfilePage() {
 
   const progress = Math.round(((currentStep + 1) / STEPS.length) * 100);
 
-  const goToStep = (step: number) => {
+  const [isSavingStep, setIsSavingStep] = React.useState(false);
+
+  const validatePersonalInfo = (): string | null => {
+    if (!formData.fullName.trim()) return "Full Name is required";
+    if (!formData.idNumber.trim()) return "ID Number (KTP) is required";
+    if (!formData.taxIdNumber.trim()) return "Tax ID Number (NPWP) is required";
+    if (!formData.nationality.trim()) return "Nationality is required";
+    if (!formData.bpjsNumber.trim()) return "BPJS Number is required";
+    if (!formData.religion.trim()) return "Religion is required";
+    if (!formData.mobilePhone.trim()) return "Mobile Phone is required";
+    if (!formData.address.trim()) return "Address is required";
+    if (!formData.personalEmail.trim()) return "Personal Email is required";
+    if (!formData.domicileAddress.trim()) return "Current Address is required";
+    if (!formData.birthPlace.trim()) return "Birth Place is required";
+    if (!formData.residentialStatus.trim()) return "Residential Status is required";
+    if (!formData.birthDate.trim()) return "Birth Date is required";
+    if (!formData.uniformShirtSize.trim()) return "Uniform Shirt Size is required";
+    if (!formData.uniformPantsSize.trim()) return "Uniform Pants Size is required";
+    return null;
+  };
+
+  const savePersonalInfo = async (): Promise<boolean> => {
+    const validationError = validatePersonalInfo();
+    if (validationError) {
+      toast.error(validationError);
+      return false;
+    }
+
+    setIsSavingStep(true);
+    try {
+      const response = await candidateAuthService.updatePersonalInfo(formData);
+      if (response.success) {
+        toast.success("Personal information saved");
+        updateUser({ name: formData.fullName });
+        return true;
+      }
+      toast.error(response.message || "Failed to save personal information");
+      return false;
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
+      return false;
+    } finally {
+      setIsSavingStep(false);
+    }
+  };
+
+  const goToStep = async (step: number) => {
     if (step >= 0 && step < STEPS.length && isStepAccessible(step)) {
+      // Save personal info when leaving step 1
+      if (currentStep === 1 && step !== 1 && !isSubmitted) {
+        const saved = await savePersonalInfo();
+        if (!saved) return;
+      }
+
       if (currentStep <= 5 && !isSubmitted) {
         setCompletedSteps((prev) => {
           const next = new Set(prev);
@@ -286,22 +378,29 @@ export default function CandidateProfilePage() {
     e.preventDefault();
     if (isSubmitted) return;
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Form Data:", formData);
-    console.log("Educational Background:", educationalBackground);
-    console.log("Work Experience:", workExperience);
-    console.log("Family Members:", familyMembers);
-    console.log("Course/Training:", courseTraining);
-    console.log("Assessment:", assessmentData);
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setCompletedSteps((prev) => {
-      const next = new Set(prev);
-      for (let i = 0; i <= 6; i++) next.add(i);
-      return next;
-    });
-    setCurrentStep(7);
-    formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+
+    try {
+      const response = await candidateAuthService.updatePersonalInfo(formData);
+
+      if (response.success) {
+        toast.success("Personal information saved successfully");
+        updateUser({ name: formData.fullName });
+        setIsSubmitted(true);
+        setCompletedSteps((prev) => {
+          const next = new Set(prev);
+          for (let i = 0; i <= 6; i++) next.add(i);
+          return next;
+        });
+        setCurrentStep(7);
+        formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        toast.error(response.message || "Failed to save personal information");
+      }
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAcceptOffer = () => {
@@ -640,38 +739,23 @@ export default function CandidateProfilePage() {
                     <FormField label="ID Number (KTP)" required>
                       <Input placeholder="16-digit ID number" value={formData.idNumber} onChange={(e) => handleInputChange("idNumber", e.target.value)} required />
                     </FormField>
-                    <FormField label="City" required>
-                      <Input placeholder="City of residence" value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} required />
-                    </FormField>
                     <FormField label="Tax ID Number (NPWP)" required>
                       <Input placeholder="Tax identification number" value={formData.taxIdNumber} onChange={(e) => handleInputChange("taxIdNumber", e.target.value)} required />
                     </FormField>
                     <FormField label="Nationality" required>
                       <Input placeholder="e.g. Indonesian" value={formData.nationality} onChange={(e) => handleInputChange("nationality", e.target.value)} required />
                     </FormField>
-                    <FormField label="BPJS Kesehatan Number" required>
-                      <Input placeholder="Health insurance number" value={formData.bpjsKesehatanNumber} onChange={(e) => handleInputChange("bpjsKesehatanNumber", e.target.value)} required />
+                    <FormField label="BPJS Number" required>
+                      <Input placeholder="BPJS insurance number" value={formData.bpjsNumber} onChange={(e) => handleInputChange("bpjsNumber", e.target.value)} required />
                     </FormField>
                     <FormField label="Religion" required>
                       <Input placeholder="Your religion" value={formData.religion} onChange={(e) => handleInputChange("religion", e.target.value)} required />
                     </FormField>
-                    <FormField label="BPJS Ketenagakerjaan Number" required>
-                      <Input placeholder="Employment insurance number" value={formData.bpjsKetenagakerjaanNumber} onChange={(e) => handleInputChange("bpjsKetenagakerjaanNumber", e.target.value)} required />
-                    </FormField>
-                    <FormField label="Ethnic Group" required>
-                      <Input placeholder="e.g. Javanese, Sundanese" value={formData.ethnicGroup} onChange={(e) => handleInputChange("ethnicGroup", e.target.value)} required />
-                    </FormField>
                     <FormField label="Mobile Phone" required>
                       <Input placeholder="+62 xxx xxxx xxxx" value={formData.mobilePhone} onChange={(e) => handleInputChange("mobilePhone", e.target.value)} required />
                     </FormField>
-                    <FormField label="Address (According to ID)" required>
-                      <Textarea placeholder="Full address as on ID card" value={formData.address} onChange={(e) => handleInputChange("address", e.target.value)} required rows={3} />
-                    </FormField>
                     <FormField label="Personal Email" required>
-                      <Input type="email" placeholder="your.email@example.com" value={formData.personalEmail} onChange={(e) => handleInputChange("personalEmail", e.target.value)} required />
-                    </FormField>
-                    <FormField label="Domicile Address" required>
-                      <Textarea placeholder="Current residential address" value={formData.domicileAddress} onChange={(e) => handleInputChange("domicileAddress", e.target.value)} required rows={3} />
+                      <Input type="email" placeholder="your.email@example.com" value={formData.personalEmail} readOnly className="bg-muted/50" />
                     </FormField>
                     <FormField label="Driving License">
                       <Select value={formData.drivingLicense} onValueChange={(value) => handleInputChange("drivingLicense", value)}>
@@ -686,8 +770,11 @@ export default function CandidateProfilePage() {
                         </SelectContent>
                       </Select>
                     </FormField>
-                    <FormField label="Birth Place" required>
-                      <Input placeholder="City of birth" value={formData.birthPlace} onChange={(e) => handleInputChange("birthPlace", e.target.value)} required />
+                    <FormField label="Address (According to ID)" required className="sm:col-span-2">
+                      <Textarea placeholder="Full address as on ID card" value={formData.address} onChange={(e) => handleInputChange("address", e.target.value)} required rows={3} />
+                    </FormField>
+                    <FormField label="Current Address" required className="sm:col-span-2">
+                      <Textarea placeholder="Current residential address" value={formData.domicileAddress} onChange={(e) => handleInputChange("domicileAddress", e.target.value)} required rows={3} />
                     </FormField>
                     <FormField label="Residential Status" required>
                       <Select value={formData.residentialStatus} onValueChange={(value) => handleInputChange("residentialStatus", value)}>
@@ -701,20 +788,11 @@ export default function CandidateProfilePage() {
                         </SelectContent>
                       </Select>
                     </FormField>
-                    <FormField label="Gender">
-                      <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                        <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                    <FormField label="Number of Dependents">
-                      <Input type="number" min="0" placeholder="0" value={formData.numberOfDependents} onChange={(e) => handleInputChange("numberOfDependents", parseInt(e.target.value) || 0)} />
-                    </FormField>
                     <FormField label="Birth Date" required>
                       <Input type="date" value={formData.birthDate} onChange={(e) => handleInputChange("birthDate", e.target.value)} required />
+                    </FormField>
+                    <FormField label="Birth Place" required>
+                      <Input placeholder="City of birth" value={formData.birthPlace} onChange={(e) => handleInputChange("birthPlace", e.target.value)} required />
                     </FormField>
                     <FormField label="Marital Status">
                       <Select value={formData.maritalStatus} onValueChange={(value) => handleInputChange("maritalStatus", value)}>
@@ -1365,7 +1443,9 @@ export default function CandidateProfilePage() {
                     {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />Save & Submit</>)}
                   </Button>
                 ) : currentStep < STEPS.length - 1 && isStepAccessible(currentStep + 1) ? (
-                  <Button type="button" onClick={() => goToStep(currentStep + 1)} className="gap-1.5">Next<ChevronRight className="h-4 w-4" /></Button>
+                  <Button type="button" onClick={() => goToStep(currentStep + 1)} disabled={isSavingStep} className="gap-1.5">
+                    {isSavingStep ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<>Next<ChevronRight className="h-4 w-4" /></>)}
+                  </Button>
                 ) : (
                   <div />
                 )}
@@ -1578,12 +1658,13 @@ function SectionCard({ title, subtitle, action, children }: SectionCardProps) {
 interface FormFieldProps {
   label: string;
   required?: boolean;
+  className?: string;
   children: React.ReactNode;
 }
 
-function FormField({ label, required, children }: FormFieldProps) {
+function FormField({ label, required, className, children }: FormFieldProps) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", className)}>
       <Label className="text-sm font-medium text-foreground/80">
         {label}
         {required && <span className="ml-0.5 text-destructive">*</span>}
