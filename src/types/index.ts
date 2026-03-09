@@ -459,3 +459,24 @@ export interface CourseTraining {
   city: string;
   certificate: string;
 }
+
+export interface CandidateAssessment {
+  id: string;
+  candidateId: string;
+  reasonLeavingLastJob: string;
+  lastJobDescription: string;
+  reasonApplying: string;
+  relevantSkills: string;
+  lastSalary: string;
+  expectedSalary: string;
+  activeLanguage: string;
+  willingToTransfer: string;
+  willingToDoubleWork: string;
+  knownEmployees: string;
+  readyToWork: string;
+  employeeRelationship: string;
+  referenceContactName: string;
+  referenceContactPhone: string;
+  createdAt: string;
+  updatedAt: string;
+}

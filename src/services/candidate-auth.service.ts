@@ -223,8 +223,19 @@ export const candidateAuthService = {
       const response = await get<unknown>("/v1/candidate-auth/profile");
       const res = response as { success?: boolean; data?: ApiCandidate };
 
+      // Debug: Log raw API response
+      console.log("[DEBUG] getProfile - raw response:", res.data);
+
       if (res.success && res.data) {
-        return { success: true, data: mapCandidate(res.data) };
+        const mapped = mapCandidate(res.data);
+        // Debug: Log mapped data
+        console.log("[DEBUG] getProfile - mapped data:", {
+          uniformShirtSize: mapped.uniformShirtSize,
+          uniformPantsSize: mapped.uniformPantsSize,
+          domicileAddress: mapped.domicileAddress,
+          drivingLicense: mapped.drivingLicense,
+        });
+        return { success: true, data: mapped };
       }
 
       return { success: false, message: "Failed to get profile" };

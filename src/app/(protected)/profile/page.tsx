@@ -81,8 +81,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
-import { candidateAuthService } from "@/services/candidate-auth.service";
 import { toast } from "sonner";
+import { useCandidateProfile } from "@/hooks/use-candidate-profile";
 import type {
   EducationalBackground,
   WorkExperience,
@@ -148,6 +148,30 @@ export default function CandidateProfilePage() {
   const router = useRouter();
   const { logout, user, acceptAgreement, updateUser } = useAuthStore();
 
+  // Use the candidate profile hook for state management with dirty tracking
+  const {
+    personalInfo: formData,
+    education: educationalBackground,
+    workExperience,
+    family: familyMembers,
+    training: courseTraining,
+    assessment: assessmentData,
+    updatePersonalInfo,
+    updateEducation,
+    updateWorkExperience,
+    updateFamily,
+    updateTraining,
+    updateAssessment,
+    isLoading: profileLoading,
+    isSaving,
+    loadError: profileError,
+    dirtyState,
+    hasUnsavedChanges,
+    isSubmitted,
+    submitApplication,
+    saveDraft,
+  } = useCandidateProfile(user?.id);
+
   // Get initials from name
   const getInitials = (name: string) => {
     return name
@@ -160,6 +184,7 @@ export default function CandidateProfilePage() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+    // No need to clear localStorage - data is now user-specific (per candidateId)
     await logout();
     setShowLogoutDialog(false);
     router.push("/login");
@@ -181,10 +206,17 @@ export default function CandidateProfilePage() {
     }
   }, [user?.agreementAcceptedAt]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [isAccepted, setIsAccepted] = React.useState(false);
   const [completedSteps, setCompletedSteps] = React.useState<Set<number>>(new Set());
   const formRef = React.useRef<HTMLDivElement>(null);
+
+  // Sync UI state when isSubmitted changes (from hook)
+  React.useEffect(() => {
+    if (isSubmitted) {
+      setCompletedSteps(new Set([0, 1, 2, 3, 4, 5, 6]));
+      setCurrentStep(7); // Go to Interview step
+    }
+  }, [isSubmitted]);
 
   // Step accessibility: step 0 always open, steps 1-6 require consent, steps 7-9 locked based on progression
   // TODO: Re-enable lock logic for steps 7-9 when ready for production
@@ -195,94 +227,9 @@ export default function CandidateProfilePage() {
     return hasConsented;
   };
 
-  const [formData, setFormData] = React.useState({
-    fullName: "",
-    idNumber: "",
-    taxIdNumber: "",
-    nationality: "",
-    bpjsNumber: "",
-    religion: "",
-    mobilePhone: "",
-    address: "",
-    personalEmail: "",
-    domicileAddress: "",
-    drivingLicense: "",
-    birthPlace: "",
-    residentialStatus: "",
-    birthDate: "",
-    uniformShirtSize: "",
-    maritalStatus: "",
-    uniformPantsSize: "",
-  });
-
-  const [profileLoading, setProfileLoading] = React.useState(true);
-  const [profileError, setProfileError] = React.useState<string | null>(null);
-
-  const fetchProfile = React.useCallback(async () => {
-    setProfileLoading(true);
-    setProfileError(null);
-    try {
-      const response = await candidateAuthService.getProfile();
-      if (response.success && response.data) {
-        const c = response.data;
-        setFormData({
-          fullName: c.fullname,
-          idNumber: c.idNo,
-          taxIdNumber: c.taxId,
-          nationality: c.citizenship,
-          bpjsNumber: c.bpjsId,
-          religion: c.religion,
-          mobilePhone: c.mobilePhone,
-          address: c.address,
-          personalEmail: c.email,
-          domicileAddress: c.domicileAddress || "",
-          drivingLicense: c.drivingLicense || "",
-          birthPlace: c.birthPlace,
-          residentialStatus: c.residentStatus?.toLowerCase() || "",
-          birthDate: c.birthDate || "",
-          uniformShirtSize: c.uniformShirtSize?.toLowerCase() || "",
-          maritalStatus: c.marritalStatus?.toLowerCase() || "",
-          uniformPantsSize: c.uniformPantsSize?.toLowerCase() || "",
-        });
-      } else {
-        setProfileError(response.message || "Failed to load profile");
-      }
-    } catch {
-      setProfileError("Failed to load profile");
-    } finally {
-      setProfileLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  const [educationalBackground, setEducationalBackground] = React.useState<EducationalBackground[]>([]);
-  const [workExperience, setWorkExperience] = React.useState<WorkExperience[]>([]);
-  const [familyMembers, setFamilyMembers] = React.useState<FamilyMember[]>([]);
-  const [courseTraining, setCourseTraining] = React.useState<CourseTraining[]>([]);
-
-  // Assessment State
-  const [assessmentData, setAssessmentData] = React.useState({
-    reasonLeavingLastJob: "",
-    lastJobDescription: "",
-    reasonApplying: "",
-    relevantSkills: "",
-    lastSalary: "",
-    expectedSalary: "",
-    activeLanguage: "",
-    willingToTransfer: "",
-    willingToDoubleWork: "",
-    knownEmployees: "",
-    readyToWork: "",
-    employeeRelationship: "",
-    referenceContactName: "",
-    referenceContactPhone: "",
-  });
-
+  // Handle assessment field changes
   const handleAssessmentChange = (field: string, value: string) => {
-    setAssessmentData((prev) => ({ ...prev, [field]: value }));
+    updateAssessment(field as keyof typeof assessmentData, value);
   };
 
   // Dialog states
@@ -303,13 +250,14 @@ export default function CandidateProfilePage() {
   const [trainingForm, setTrainingForm] = React.useState<Omit<CourseTraining, "id">>({ courseTopic: "", provider: "", year: new Date().getFullYear(), city: "", certificate: "" });
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    updatePersonalInfo(field as keyof typeof formData, String(value));
   };
 
   const progress = Math.round(((currentStep + 1) / STEPS.length) * 100);
 
-  const [isSavingStep, setIsSavingStep] = React.useState(false);
+  // isSaving from hook is used for submit loading state
 
+  // Validation for personal info before submit
   const validatePersonalInfo = (): string | null => {
     if (!formData.fullName.trim()) return "Full Name is required";
     if (!formData.idNumber.trim()) return "ID Number (KTP) is required";
@@ -329,39 +277,10 @@ export default function CandidateProfilePage() {
     return null;
   };
 
-  const savePersonalInfo = async (): Promise<boolean> => {
-    const validationError = validatePersonalInfo();
-    if (validationError) {
-      toast.error(validationError);
-      return false;
-    }
-
-    setIsSavingStep(true);
-    try {
-      const response = await candidateAuthService.updatePersonalInfo(formData);
-      if (response.success) {
-        toast.success("Personal information saved");
-        updateUser({ name: formData.fullName });
-        return true;
-      }
-      toast.error(response.message || "Failed to save personal information");
-      return false;
-    } catch {
-      toast.error("An unexpected error occurred. Please try again.");
-      return false;
-    } finally {
-      setIsSavingStep(false);
-    }
-  };
-
-  const goToStep = async (step: number) => {
+  const goToStep = (step: number) => {
     if (step >= 0 && step < STEPS.length && isStepAccessible(step)) {
-      // Save personal info when leaving step 1
-      if (currentStep === 1 && step !== 1 && !isSubmitted) {
-        const saved = await savePersonalInfo();
-        if (!saved) return;
-      }
-
+      // No longer save on every navigation - dirty tracking handles this
+      // Data is saved only on "Submit Application" at step 6
       if (currentStep <= 5 && !isSubmitted) {
         setCompletedSteps((prev) => {
           const next = new Set(prev);
@@ -377,15 +296,27 @@ export default function CandidateProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitted) return;
+
+    // Only allow submit from Assessment step (step 6)
+    if (currentStep !== 6) return;
+
+    // Validate personal info before submitting
+    const validationError = validatePersonalInfo();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const response = await candidateAuthService.updatePersonalInfo(formData);
+      // Submit all dirty sections using the hook
+      const result = await submitApplication();
 
-      if (response.success) {
-        toast.success("Personal information saved successfully");
+      if (result.success) {
+        toast.success("Application submitted successfully");
         updateUser({ name: formData.fullName });
-        setIsSubmitted(true);
+        // isSubmitted is now managed by the hook - UI syncs via useEffect
         setCompletedSteps((prev) => {
           const next = new Set(prev);
           for (let i = 0; i <= 6; i++) next.add(i);
@@ -394,7 +325,8 @@ export default function CandidateProfilePage() {
         setCurrentStep(7);
         formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        toast.error(response.message || "Failed to save personal information");
+        // Show errors for failed sections
+        result.errors.forEach((error) => toast.error(error));
       }
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
@@ -421,13 +353,11 @@ export default function CandidateProfilePage() {
   };
   const saveEducation = () => {
     if (eduEditIndex !== null) {
-      setEducationalBackground((prev) => {
-        const updated = [...prev];
-        updated[eduEditIndex] = { ...updated[eduEditIndex], ...eduForm };
-        return updated;
-      });
+      const updated = [...educationalBackground];
+      updated[eduEditIndex] = { ...updated[eduEditIndex], ...eduForm };
+      updateEducation(updated);
     } else {
-      setEducationalBackground((prev) => [...prev, { id: crypto.randomUUID(), ...eduForm }]);
+      updateEducation([...educationalBackground, { id: crypto.randomUUID(), ...eduForm }]);
     }
     setEduDialogOpen(false);
   };
@@ -446,13 +376,11 @@ export default function CandidateProfilePage() {
   };
   const saveWork = () => {
     if (workEditIndex !== null) {
-      setWorkExperience((prev) => {
-        const updated = [...prev];
-        updated[workEditIndex] = { ...updated[workEditIndex], ...workForm };
-        return updated;
-      });
+      const updated = [...workExperience];
+      updated[workEditIndex] = { ...updated[workEditIndex], ...workForm };
+      updateWorkExperience(updated);
     } else {
-      setWorkExperience((prev) => [...prev, { id: crypto.randomUUID(), ...workForm }]);
+      updateWorkExperience([...workExperience, { id: crypto.randomUUID(), ...workForm }]);
     }
     setWorkDialogOpen(false);
   };
@@ -471,13 +399,11 @@ export default function CandidateProfilePage() {
   };
   const saveFamily = () => {
     if (familyEditIndex !== null) {
-      setFamilyMembers((prev) => {
-        const updated = [...prev];
-        updated[familyEditIndex] = { ...updated[familyEditIndex], ...familyForm };
-        return updated;
-      });
+      const updated = [...familyMembers];
+      updated[familyEditIndex] = { ...updated[familyEditIndex], ...familyForm };
+      updateFamily(updated);
     } else {
-      setFamilyMembers((prev) => [...prev, { id: crypto.randomUUID(), ...familyForm }]);
+      updateFamily([...familyMembers, { id: crypto.randomUUID(), ...familyForm }]);
     }
     setFamilyDialogOpen(false);
   };
@@ -496,13 +422,11 @@ export default function CandidateProfilePage() {
   };
   const saveTraining = () => {
     if (trainingEditIndex !== null) {
-      setCourseTraining((prev) => {
-        const updated = [...prev];
-        updated[trainingEditIndex] = { ...updated[trainingEditIndex], ...trainingForm };
-        return updated;
-      });
+      const updated = [...courseTraining];
+      updated[trainingEditIndex] = { ...updated[trainingEditIndex], ...trainingForm };
+      updateTraining(updated);
     } else {
-      setCourseTraining((prev) => [...prev, { id: crypto.randomUUID(), ...trainingForm }]);
+      updateTraining([...courseTraining, { id: crypto.randomUUID(), ...trainingForm }]);
     }
     setTrainingDialogOpen(false);
   };
@@ -648,7 +572,7 @@ export default function CandidateProfilePage() {
 
           {/* Form Content */}
           <div ref={formRef} className="min-w-0 flex-1">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault(); }}>
 
               {/* Step 0: Agreement */}
               <div className={cn("transition-all duration-300", currentStep === 0 ? "animate-fade-in" : "hidden")}>
@@ -872,7 +796,7 @@ export default function CandidateProfilePage() {
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent" onClick={() => openEditEducation(index)}>
                                       <Pencil className="h-3.5 w-3.5" />
                                     </Button>
-                                    <DeleteRowButton onConfirm={() => setEducationalBackground((prev) => prev.filter((item) => item.id !== edu.id))} itemName={edu.schoolUniversity || `Entry #${index + 1}`} />
+                                    <DeleteRowButton onConfirm={() => updateEducation(educationalBackground.filter((item) => item.id !== edu.id))} itemName={edu.schoolUniversity || `Entry #${index + 1}`} />
                                   </div>
                                 </TableCell>
                               )}
@@ -924,7 +848,7 @@ export default function CandidateProfilePage() {
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent" onClick={() => openEditWork(index)}>
                                       <Pencil className="h-3.5 w-3.5" />
                                     </Button>
-                                    <DeleteRowButton onConfirm={() => setWorkExperience((prev) => prev.filter((item) => item.id !== work.id))} itemName={work.company || `Entry #${index + 1}`} />
+                                    <DeleteRowButton onConfirm={() => updateWorkExperience(workExperience.filter((item) => item.id !== work.id))} itemName={work.company || `Entry #${index + 1}`} />
                                   </div>
                                 </TableCell>
                               )}
@@ -976,7 +900,7 @@ export default function CandidateProfilePage() {
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent" onClick={() => openEditFamily(index)}>
                                       <Pencil className="h-3.5 w-3.5" />
                                     </Button>
-                                    <DeleteRowButton onConfirm={() => setFamilyMembers((prev) => prev.filter((item) => item.id !== member.id))} itemName={member.name || `Entry #${index + 1}`} />
+                                    <DeleteRowButton onConfirm={() => updateFamily(familyMembers.filter((item) => item.id !== member.id))} itemName={member.name || `Entry #${index + 1}`} />
                                   </div>
                                 </TableCell>
                               )}
@@ -1028,7 +952,7 @@ export default function CandidateProfilePage() {
                                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent" onClick={() => openEditTraining(index)}>
                                       <Pencil className="h-3.5 w-3.5" />
                                     </Button>
-                                    <DeleteRowButton onConfirm={() => setCourseTraining((prev) => prev.filter((item) => item.id !== course.id))} itemName={course.courseTopic || `Entry #${index + 1}`} />
+                                    <DeleteRowButton onConfirm={() => updateTraining(courseTraining.filter((item) => item.id !== course.id))} itemName={course.courseTopic || `Entry #${index + 1}`} />
                                   </div>
                                 </TableCell>
                               )}
@@ -1426,29 +1350,58 @@ export default function CandidateProfilePage() {
               </div>
 
               {/* Navigation Footer */}
-              <div className="mt-6 flex items-center justify-between rounded-xl bg-white p-4 shadow-sm shadow-black/[0.03] ring-1 ring-black/[0.04]">
-                <Button type="button" variant="ghost" onClick={() => goToStep(currentStep - 1)} disabled={currentStep === 0 || (currentStep > 6 && !isStepAccessible(currentStep - 1))} className="gap-1.5">
-                  <ChevronLeft className="h-4 w-4" />Previous
-                </Button>
-                <div className="flex items-center gap-1.5">
-                  {STEPS.map((step) => {
-                    const locked = !isStepAccessible(step.id);
-                    return (
-                      <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6 bg-accent" : completedSteps.has(step.id) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} />
-                    );
-                  })}
-                </div>
-                {currentStep === 6 && !isSubmitted ? (
-                  <Button type="submit" disabled={isSubmitting} className="gap-1.5">
-                    {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />Save & Submit</>)}
-                  </Button>
-                ) : currentStep < STEPS.length - 1 && isStepAccessible(currentStep + 1) ? (
-                  <Button type="button" onClick={() => goToStep(currentStep + 1)} disabled={isSavingStep} className="gap-1.5">
-                    {isSavingStep ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<>Next<ChevronRight className="h-4 w-4" /></>)}
-                  </Button>
-                ) : (
-                  <div />
+              <div className="mt-6 space-y-3">
+                {/* Unsaved Changes Indicator */}
+                {hasUnsavedChanges && !isSubmitted && currentStep >= 1 && currentStep <= 6 && (
+                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-sm text-amber-700">You have unsaved changes</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const result = await saveDraft();
+                        if (result.success) {
+                          toast.success("Draft saved successfully");
+                        } else {
+                          result.errors.forEach((error) => toast.error(error));
+                        }
+                      }}
+                      disabled={isSaving}
+                      className="h-8 border-amber-300 bg-white text-amber-700 hover:bg-amber-100"
+                    >
+                      {isSaving ? (<><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Saving...</>) : (<><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</>)}
+                    </Button>
+                  </div>
                 )}
+
+                <div className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm shadow-black/[0.03] ring-1 ring-black/[0.04]">
+                  <Button type="button" variant="ghost" onClick={() => goToStep(currentStep - 1)} disabled={currentStep === 0 || (currentStep > 6 && !isStepAccessible(currentStep - 1))} className="gap-1.5">
+                    <ChevronLeft className="h-4 w-4" />Previous
+                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    {STEPS.map((step) => {
+                      const locked = !isStepAccessible(step.id);
+                      return (
+                        <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6 bg-accent" : completedSteps.has(step.id) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} />
+                      );
+                    })}
+                  </div>
+                  {currentStep === 6 && !isSubmitted ? (
+                    <Button key="submit-btn" type="submit" disabled={isSubmitting || isSaving} className="gap-1.5">
+                      {isSubmitting || isSaving ? (<><Loader2 className="h-4 w-4 animate-spin" />Submitting...</>) : (<><Save className="h-4 w-4" />Submit Application</>)}
+                    </Button>
+                  ) : currentStep < STEPS.length - 1 && isStepAccessible(currentStep + 1) ? (
+                    <Button key="next-btn" type="button" onClick={() => goToStep(currentStep + 1)} className="gap-1.5">
+                      Next<ChevronRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <div key="empty-div" />
+                  )}
+                </div>
               </div>
             </form>
           </div>
