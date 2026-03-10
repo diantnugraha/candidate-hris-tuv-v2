@@ -38,7 +38,9 @@ api.interceptors.response.use(
       // Handle unauthorized access - but not for auth endpoints
       const isAuthEndpoint = error.config?.url?.includes("/candidate-auth/");
       if (typeof window !== "undefined" && !isAuthEndpoint) {
+        // Clear both localStorage token and Zustand persisted store
         localStorage.removeItem("candidate_auth_token");
+        localStorage.removeItem("candidate-auth-store");
         window.location.href = "/login";
       }
     }

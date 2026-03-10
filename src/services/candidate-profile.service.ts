@@ -1,9 +1,12 @@
-import { get, put } from "@/lib/axios";
+import { get, post, put } from "@/lib/axios";
 import type {
   EducationalBackground,
   WorkExperience,
   FamilyMember,
   CourseTraining,
+  InterviewProgress,
+  McuStatus,
+  OnboardingData,
 } from "@/types";
 
 // --- Types ---
@@ -587,6 +590,137 @@ export const candidateProfileService = {
     }
   },
 
+  // ==================== Interview Progress (Read-Only from HRIS) ====================
+  async getInterviewProgress(): Promise<ApiResponse<InterviewProgress | null>> {
+    try {
+      const response = await get<{
+        success: boolean;
+        data: {
+          interview1: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean; description: string };
+          interview2: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean; description: string };
+          current_stage: string;
+          interview_started: boolean;
+          interview_started_at: string | null;
+          interview_date: string | null;
+          interview_type: string | null;
+          all_passed: boolean;
+          any_failed: boolean;
+        } | null;
+      }>("/v1/candidate-profile/interview-progress");
+
+      if (response.success && response.data) {
+        const d = response.data;
+        return {
+          success: true,
+          data: {
+            interview1: d.interview1,
+            interview2: d.interview2,
+            currentStage: d.current_stage as InterviewProgress["currentStage"],
+            interviewStarted: d.interview_started,
+            interviewStartedAt: d.interview_started_at,
+            interviewDate: d.interview_date,
+            interviewType: d.interview_type,
+            allPassed: d.all_passed,
+            anyFailed: d.any_failed,
+          },
+        };
+      }
+
+      return { success: true, data: null };
+    } catch {
+      return { success: false, message: "Failed to fetch interview progress" };
+    }
+  },
+
+  // ==================== MCU Status (Read-Only from HRIS) ====================
+  async getMcuStatus(): Promise<ApiResponse<McuStatus | null>> {
+    try {
+      const response = await get<{
+        success: boolean;
+        data: {
+          status: string;
+          description: string;
+          document_url: string | null;
+          document_name: string | null;
+        } | null;
+      }>("/v1/candidate-profile/mcu-status");
+
+      if (response.success && response.data) {
+        const d = response.data;
+        return {
+          success: true,
+          data: {
+            status: d.status,
+            description: d.description,
+            documentUrl: d.document_url,
+            documentName: d.document_name,
+          },
+        };
+      }
+
+      return { success: true, data: null };
+    } catch {
+      return { success: false, message: "Failed to fetch MCU status" };
+    }
+  },
+
+  // ==================== Onboarding (Read-Only from HRIS) ====================
+  async getOnboarding(): Promise<ApiResponse<OnboardingData | null>> {
+    try {
+      const response = await get<{
+        success: boolean;
+        data: {
+          id: number;
+          candidate_id: number;
+          job_placement: string;
+          document: string;
+          document_candidate: string;
+          facilities: { id: number; inventory_no: string; item: string; qty: number; unit: string; condition: string; status: string }[];
+          programs: { id: number; program: string; date: string; location: string; pic: string; status: string }[];
+          created_at: string | null;
+          updated_at: string | null;
+        } | null;
+      }>("/v1/candidate-profile/onboarding");
+
+      if (response.success && response.data) {
+        const d = response.data;
+        return {
+          success: true,
+          data: {
+            id: d.id,
+            candidateId: d.candidate_id,
+            jobPlacement: d.job_placement,
+            document: d.document,
+            documentCandidate: d.document_candidate,
+            facilities: d.facilities.map((f) => ({
+              id: f.id,
+              inventoryNo: f.inventory_no,
+              item: f.item,
+              qty: f.qty,
+              unit: f.unit,
+              condition: f.condition,
+              status: f.status,
+            })),
+            programs: d.programs.map((p) => ({
+              id: p.id,
+              program: p.program,
+              date: p.date,
+              location: p.location,
+              pic: p.pic,
+              status: p.status,
+            })),
+            createdAt: d.created_at,
+            updatedAt: d.updated_at,
+          },
+        };
+      }
+
+      return { success: true, data: null };
+    } catch {
+      return { success: false, message: "Failed to fetch onboarding data" };
+    }
+  },
+
   // ==================== Submit All (Batch Save) ====================
   async submitApplication(data: {
     personalInfo: PersonalInfoFormData;
@@ -628,6 +762,15 @@ export const candidateProfileService = {
 
     const assessmentResult = await this.saveAssessment(data.assessment);
     if (!assessmentResult.success) errors.push(`Assessment: ${assessmentResult.message}`);
+
+    // If all sections saved successfully, mark biodata as submitted in backend
+    if (errors.length === 0) {
+      try {
+        await post<ApiResponse<null>>("/candidate-profile/submit");
+      } catch {
+        errors.push("Failed to submit biodata");
+      }
+    }
 
     return {
       success: errors.length === 0,

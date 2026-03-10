@@ -83,6 +83,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
 import { useCandidateProfile } from "@/hooks/use-candidate-profile";
+import { useRecruitmentProgress } from "@/hooks/use-recruitment-progress";
 import type {
   EducationalBackground,
   WorkExperience,
@@ -103,46 +104,7 @@ const STEPS = [
   { id: 9, label: "Onboarding", icon: Building2, description: "Onboarding details" },
 ] as const;
 
-// Dummy Interview data (from HRIS) — interview is conducted outside the system
-const interviewData = {
-  status: "waiting" as "waiting" | "scheduled" | "in_progress" | "passed" | "failed",
-};
-
-// Dummy MCU data (from HRIS) — MCU is conducted outside the system
-const mcuData = {
-  status: "passed" as "pending" | "scheduled" | "passed" | "failed",
-  files: [
-    { name: "MCU_Result_BloodTest.pdf", size: "1.2 MB", uploadedAt: "2026-03-04" },
-    { name: "MCU_Result_GeneralCheckup.pdf", size: "842 KB", uploadedAt: "2026-03-04" },
-    { name: "MCU_Result_ChestXRay.pdf", size: "3.5 MB", uploadedAt: "2026-03-05" },
-  ] as { name: string; size: string; uploadedAt: string }[],
-};
-
-// Dummy Onboarding data (from HRIS)
-const onboardingData = {
-  employeeId: "EMP-2026-0412",
-  department: "Engineering",
-  jobTitle: "Software Engineer",
-  jobLevel: "Senior",
-  superior: "David Park - Engineering Manager",
-  joinDate: "2026-04-01",
-  jobPlacement: "Head Office - Jakarta",
-};
-
-// Dummy Facilities data (from HRIS)
-const facilitiesData: { items: string; qty: number; unit: string; inventoryNo: string; condition: string; status: string }[] = [
-  { items: "Laptop (ThinkPad X1 Carbon)", qty: 1, unit: "pcs", inventoryNo: "IT-2026-0891", condition: "New", status: "Assigned" },
-  { items: "ID Card & Access Badge", qty: 1, unit: "pcs", inventoryNo: "SEC-2026-0412", condition: "New", status: "Assigned" },
-  { items: "Office Desk Set (Monitor + Keyboard)", qty: 1, unit: "set", inventoryNo: "GA-2026-1553", condition: "New", status: "Prepared" },
-];
-
-// Dummy Onboarding Program data (from HRIS)
-const onboardingProgramData: { program: string; date: string; location: string; pic: string; status: string }[] = [
-  { program: "Company Orientation & Culture", date: "2026-04-01", location: "Training Room A", pic: "HR Team", status: "Scheduled" },
-  { program: "IT Systems & Tools Setup", date: "2026-04-01", location: "IT Helpdesk", pic: "IT Support", status: "Scheduled" },
-  { program: "Department Introduction", date: "2026-04-02", location: "Engineering Floor", pic: "David Park", status: "Scheduled" },
-  { program: "Safety & Compliance Training", date: "2026-04-03", location: "Online (LMS)", pic: "Compliance Team", status: "Pending" },
-];
+// No more dummy data — interview, MCU, and onboarding data are fetched from the API via useRecruitmentProgress hook
 
 export default function CandidateProfilePage() {
   const router = useRouter();
@@ -171,6 +133,13 @@ export default function CandidateProfilePage() {
     submitApplication,
     saveDraft,
   } = useCandidateProfile(user?.id);
+
+  // Fetch interview, MCU, and onboarding data from HRIS (read-only)
+  const {
+    interview: interviewData,
+    mcu: mcuData,
+    onboarding: onboardingData,
+  } = useRecruitmentProgress(user?.id, isSubmitted);
 
   // Get initials from name
   const getInitials = (name: string) => {
@@ -218,13 +187,24 @@ export default function CandidateProfilePage() {
     }
   }, [isSubmitted]);
 
-  // Step accessibility: step 0 always open, steps 1-6 require consent, steps 7-9 locked based on progression
-  // TODO: Re-enable lock logic for steps 7-9 when ready for production
+  // Sequential step accessibility
   const isStepAccessible = (stepId: number): boolean => {
     if (stepId === 0) return true;
-    if (stepId >= 1 && stepId <= 6) return hasConsented;
-    // Steps 7-9: temporarily unlocked for design review
-    return hasConsented;
+    if (!hasConsented) return false;
+    // Steps 1-6: all previous sections must be complete
+    if (stepId >= 1 && stepId <= 6) {
+      for (let i = 1; i < stepId; i++) {
+        if (!isSectionComplete(i)) return false;
+      }
+      return true;
+    }
+    // Step 7 (Interview): requires submitted application + HR has started interview process
+    if (stepId === 7) return isSubmitted && interviewData !== null && interviewData.interviewStarted;
+    // Step 8 (MCU): requires both interviews passed + MCU data available
+    if (stepId === 8) return isSubmitted && interviewData?.allPassed === true && mcuData !== null;
+    // Step 9 (Onboarding): requires MCU passed + onboarding data available
+    if (stepId === 9) return isSubmitted && mcuData?.status === "PASSED" && onboardingData !== null;
+    return false;
   };
 
   // Handle assessment field changes
@@ -257,7 +237,56 @@ export default function CandidateProfilePage() {
 
   // isSaving from hook is used for submit loading state
 
-  // Validation for personal info before submit
+  // --- Section completion checks ---
+  const isPersonalInfoComplete = (): boolean => {
+    return !!(
+      formData.fullName.trim() &&
+      formData.idNumber.trim() &&
+      formData.taxIdNumber.trim() &&
+      formData.nationality.trim() &&
+      formData.bpjsNumber.trim() &&
+      formData.religion.trim() &&
+      formData.mobilePhone.trim() &&
+      formData.address.trim() &&
+      formData.personalEmail.trim() &&
+      formData.domicileAddress.trim() &&
+      formData.birthPlace.trim() &&
+      formData.residentialStatus.trim() &&
+      formData.birthDate.trim() &&
+      formData.uniformShirtSize.trim() &&
+      formData.uniformPantsSize.trim()
+    );
+  };
+
+  const isEducationComplete = (): boolean => educationalBackground.length > 0;
+  const isExperienceComplete = (): boolean => workExperience.length > 0;
+  const isFamilyComplete = (): boolean => familyMembers.length > 0;
+  const isTrainingComplete = (): boolean => courseTraining.length > 0;
+
+  // Check if a section (by step id) is complete
+  const isSectionComplete = (stepId: number): boolean => {
+    switch (stepId) {
+      case 0: return hasConsented;
+      case 1: return isPersonalInfoComplete();
+      case 2: return isEducationComplete();
+      case 3: return isExperienceComplete();
+      case 4: return isFamilyComplete();
+      case 5: return isTrainingComplete();
+      case 6: return true; // Assessment has no required fields
+      default: return false;
+    }
+  };
+
+  // Get the label of the first incomplete section blocking access (for error messages)
+  const SECTION_LABELS: Record<number, string> = {
+    1: "Personal Info",
+    2: "Education",
+    3: "Experience",
+    4: "Family",
+    5: "Training",
+  };
+
+  // Validation for personal info — returns first missing field name
   const validatePersonalInfo = (): string | null => {
     if (!formData.fullName.trim()) return "Full Name is required";
     if (!formData.idNumber.trim()) return "ID Number (KTP) is required";
@@ -277,20 +306,54 @@ export default function CandidateProfilePage() {
     return null;
   };
 
-  const goToStep = (step: number) => {
-    if (step >= 0 && step < STEPS.length && isStepAccessible(step)) {
-      // No longer save on every navigation - dirty tracking handles this
-      // Data is saved only on "Submit Application" at step 6
-      if (currentStep <= 5 && !isSubmitted) {
-        setCompletedSteps((prev) => {
-          const next = new Set(prev);
-          next.add(currentStep);
-          return next;
-        });
-      }
-      setCurrentStep(step);
-      formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  // Get validation error for a section (for detailed toast messages)
+  const getSectionValidationError = (stepId: number): string | null => {
+    switch (stepId) {
+      case 1: return validatePersonalInfo();
+      case 2: return educationalBackground.length === 0 ? "Please add at least one education entry" : null;
+      case 3: return workExperience.length === 0 ? "Please add at least one work experience entry" : null;
+      case 4: return familyMembers.length === 0 ? "Please add at least one family member" : null;
+      case 5: return courseTraining.length === 0 ? "Please add at least one training/course entry" : null;
+      default: return null;
     }
+  };
+
+  const goToStep = (step: number) => {
+    if (step < 0 || step >= STEPS.length) return;
+
+    // For steps 1-6, check sequential completion of all prior sections
+    if (step >= 1 && step <= 6 && !isStepAccessible(step)) {
+      // Find the first incomplete section that blocks access
+      const firstIncomplete = Array.from({ length: step }, (_, i) => i + 1).find(
+        (i) => i < step && !isSectionComplete(i)
+      );
+
+      if (firstIncomplete !== undefined) {
+        const sectionLabel = SECTION_LABELS[firstIncomplete] || STEPS[firstIncomplete]?.label;
+        const error = getSectionValidationError(firstIncomplete);
+        toast.error(error || `Please complete ${sectionLabel} first`, {
+          description: `Complete the ${sectionLabel} section before proceeding.`,
+        });
+        // Navigate to the first incomplete section
+        setCurrentStep(firstIncomplete);
+        formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    }
+
+    if (!isStepAccessible(step)) return;
+
+    // No longer save on every navigation - dirty tracking handles this
+    // Data is saved only on "Submit Application" at step 6
+    if (currentStep <= 5 && !isSubmitted) {
+      setCompletedSteps((prev) => {
+        const next = new Set(prev);
+        next.add(currentStep);
+        return next;
+      });
+    }
+    setCurrentStep(step);
+    formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -300,11 +363,18 @@ export default function CandidateProfilePage() {
     // Only allow submit from Assessment step (step 6)
     if (currentStep !== 6) return;
 
-    // Validate personal info before submitting
-    const validationError = validatePersonalInfo();
-    if (validationError) {
-      toast.error(validationError);
-      return;
+    // Validate all sections (1-5) before submitting
+    for (let i = 1; i <= 5; i++) {
+      if (!isSectionComplete(i)) {
+        const sectionLabel = SECTION_LABELS[i] || STEPS[i]?.label;
+        const error = getSectionValidationError(i);
+        toast.error(error || `Please complete ${sectionLabel}`, {
+          description: `Complete the ${sectionLabel} section before submitting.`,
+        });
+        setCurrentStep(i);
+        formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -538,10 +608,18 @@ export default function CandidateProfilePage() {
           {/* Step Navigation Sidebar */}
           <nav className="shrink-0 lg:w-56">
             <div className="sticky top-[5.5rem] space-y-1">
-              {STEPS.map((step) => {
+              {STEPS.filter((step) => {
+                // Hide Interview until HR has started the process
+                if (step.id === 7) return isSubmitted && interviewData !== null;
+                // Hide MCU until data exists
+                if (step.id === 8) return mcuData !== null;
+                // Hide Onboarding until data exists
+                if (step.id === 9) return onboardingData !== null;
+                return true;
+              }).map((step) => {
                 const Icon = step.icon;
                 const isActive = currentStep === step.id;
-                const isCompleted = completedSteps.has(step.id);
+                const isCompleted = completedSteps.has(step.id) && isSectionComplete(step.id);
                 const isLocked = !isStepAccessible(step.id);
                 return (
                   <button
@@ -562,7 +640,13 @@ export default function CandidateProfilePage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className={cn("text-sm font-medium truncate transition-colors", isLocked ? "text-muted-foreground/50" : isActive ? "text-foreground" : "text-muted-foreground")}>{step.label}</p>
-                      <p className="text-[11px] text-muted-foreground/70 truncate">{isLocked ? "Awaiting previous step" : step.description}</p>
+                      <p className="text-[11px] text-muted-foreground/70 truncate">{isLocked ? (() => {
+                        if (step.id >= 2 && step.id <= 6 && hasConsented) {
+                          const blocker = Array.from({ length: step.id }, (_, i) => i + 1).find(i => i < step.id && !isSectionComplete(i));
+                          return blocker !== undefined ? `Complete ${SECTION_LABELS[blocker] || STEPS[blocker]?.label} first` : "Awaiting previous step";
+                        }
+                        return "Awaiting previous step";
+                      })() : step.description}</p>
                     </div>
                   </button>
                 );
@@ -1028,124 +1112,197 @@ export default function CandidateProfilePage() {
 
               {/* Step 7: Interview - View Only */}
               <div className={cn("transition-all duration-300", currentStep === 7 ? "animate-fade-in" : "hidden")}>
-                <SectionCard title="Interview Process" subtitle="Your interview status as managed by HR">
+                {interviewData && <SectionCard title="Interview Process" subtitle="Your interview schedule and progress">
                   <div className="space-y-6">
-                    {/* Interview Status Banner */}
+
+                    {/* Interview Schedule Info */}
+                    {(interviewData.interviewDate || interviewData.interviewType) && (
+                      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                        {interviewData.interviewDate && (
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-200/70">
+                              <CalendarDays className="h-4.5 w-4.5 text-slate-600" />
+                            </div>
+                            <div>
+                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Schedule</p>
+                              <p className="text-sm font-semibold text-slate-700">
+                                {new Date(interviewData.interviewDate).toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {interviewData.interviewType && (
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-200/70">
+                              {interviewData.interviewType === "ONLINE" ? <Video className="h-4.5 w-4.5 text-slate-600" /> : <MapPin className="h-4.5 w-4.5 text-slate-600" />}
+                            </div>
+                            <div>
+                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Type</p>
+                              <p className="text-sm font-semibold text-slate-700">{interviewData.interviewType === "ONLINE" ? "Online" : "Onsite"}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Overall Status */}
                     <div className={cn(
-                      "flex items-center gap-4 rounded-xl border px-5 py-4",
-                      interviewData.status === "passed" ? "border-emerald-200 bg-emerald-50" :
-                      interviewData.status === "failed" ? "border-red-200 bg-red-50" :
-                      interviewData.status === "scheduled" ? "border-blue-200 bg-blue-50" :
-                      interviewData.status === "in_progress" ? "border-violet-200 bg-violet-50" :
-                      "border-amber-200 bg-amber-50"
+                      "flex items-center gap-3 rounded-xl border px-5 py-3.5",
+                      interviewData.allPassed ? "border-emerald-200 bg-emerald-50" :
+                      interviewData.anyFailed ? "border-red-200 bg-red-50" :
+                      "border-blue-200 bg-blue-50"
                     )}>
                       <div className={cn(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-                        interviewData.status === "passed" ? "bg-emerald-100 text-emerald-600" :
-                        interviewData.status === "failed" ? "bg-red-100 text-red-600" :
-                        interviewData.status === "scheduled" ? "bg-blue-100 text-blue-600" :
-                        interviewData.status === "in_progress" ? "bg-violet-100 text-violet-600" :
-                        "bg-amber-100 text-amber-600"
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                        interviewData.allPassed ? "bg-emerald-100 text-emerald-600" :
+                        interviewData.anyFailed ? "bg-red-100 text-red-600" :
+                        "bg-blue-100 text-blue-600"
                       )}>
-                        {interviewData.status === "passed" ? <CheckCircle2 className="h-6 w-6" /> :
-                         interviewData.status === "failed" ? <XCircle className="h-6 w-6" /> :
-                         interviewData.status === "scheduled" ? <CalendarDays className="h-6 w-6" /> :
-                         interviewData.status === "in_progress" ? <Video className="h-6 w-6" /> :
-                         <Clock className="h-6 w-6" />}
+                        {interviewData.allPassed ? <CheckCircle2 className="h-5 w-5" /> :
+                         interviewData.anyFailed ? <XCircle className="h-5 w-5" /> :
+                         <Clock className="h-5 w-5" />}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Interview Status</p>
+                        <p className="text-xs font-medium text-muted-foreground">Overall Status</p>
                         <p className={cn(
-                          "text-lg font-semibold capitalize",
-                          interviewData.status === "passed" ? "text-emerald-700" :
-                          interviewData.status === "failed" ? "text-red-700" :
-                          interviewData.status === "scheduled" ? "text-blue-700" :
-                          interviewData.status === "in_progress" ? "text-violet-700" :
-                          "text-amber-700"
+                          "text-sm font-semibold",
+                          interviewData.allPassed ? "text-emerald-700" :
+                          interviewData.anyFailed ? "text-red-700" :
+                          "text-blue-700"
                         )}>
-                          {interviewData.status === "waiting" ? "Waiting for Schedule" :
-                           interviewData.status === "scheduled" ? "Scheduled" :
-                           interviewData.status === "in_progress" ? "In Progress" :
-                           interviewData.status === "passed" ? "Passed" : "Failed"}
+                          {interviewData.allPassed ? "All Interviews Passed" :
+                           interviewData.anyFailed ? "Interview Failed" :
+                           "In Progress"}
                         </p>
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-dashed border-border/80 bg-muted/30 px-4 py-3">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        Interview results are managed and recorded by the HR department. Status updates will be reflected here automatically.
+                    {/* Interview Stage Cards */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {[
+                        { label: "Interview 1", subtitle: "HR Interview", icon: <Shield className="h-5 w-5" />, data: interviewData.interview1 },
+                        { label: "Interview 2", subtitle: "User Interview", icon: <UserCheck className="h-5 w-5" />, data: interviewData.interview2 },
+                      ].map((stage) => (
+                        <div key={stage.label} className={cn(
+                          "relative rounded-xl border p-5 transition-all",
+                          stage.data.locked ? "border-border/40 bg-muted/20 opacity-50" :
+                          stage.data.passed ? "border-emerald-200 bg-emerald-50/40" :
+                          stage.data.failed ? "border-red-200 bg-red-50/40" :
+                          "border-blue-200 bg-blue-50/40"
+                        )}>
+                          {stage.data.locked && (
+                            <div className="absolute right-3 top-3">
+                              <Lock className="h-4 w-4 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <div className="flex items-start gap-3">
+                            <div className={cn(
+                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                              stage.data.locked ? "bg-muted/40 text-muted-foreground/40" :
+                              stage.data.passed ? "bg-emerald-100 text-emerald-600" :
+                              stage.data.failed ? "bg-red-100 text-red-600" :
+                              "bg-blue-100 text-blue-600"
+                            )}>
+                              {stage.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <p className="text-sm font-semibold">{stage.label}</p>
+                                  <p className="text-xs text-muted-foreground">{stage.subtitle}</p>
+                                </div>
+                                <Badge variant="outline" className={cn(
+                                  "shrink-0 text-xs",
+                                  stage.data.locked ? "text-muted-foreground border-border/40" :
+                                  stage.data.passed ? "border-emerald-300 text-emerald-700 bg-emerald-50" :
+                                  stage.data.failed ? "border-red-300 text-red-700 bg-red-50" :
+                                  "border-blue-300 text-blue-700 bg-blue-50"
+                                )}>
+                                  {stage.data.locked ? "Locked" : stage.data.passed ? "Passed" : stage.data.failed ? "Failed" : "Pending"}
+                                </Badge>
+                              </div>
+                              {!stage.data.locked && stage.data.description && (
+                                <div className="mt-3 rounded-lg bg-white/60 border border-border/30 px-3 py-2.5">
+                                  <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{stage.data.description}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-3">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Interview schedule and results are managed by HR. Status updates will appear here automatically.
                       </p>
                     </div>
                   </div>
-                </SectionCard>
+                </SectionCard>}
               </div>
 
               {/* Step 8: MCU (Medical Check-Up) - View Only */}
               <div className={cn("transition-all duration-300", currentStep === 8 ? "animate-fade-in" : "hidden")}>
-                <SectionCard title="Medical Check-Up (MCU)" subtitle="Your MCU status as recorded by HR">
+                {mcuData && <SectionCard title="Medical Check-Up (MCU)" subtitle="Your MCU status as recorded by HR">
                   <div className="space-y-6">
                     {/* MCU Status Banner */}
                     <div className={cn(
                       "flex items-center gap-4 rounded-xl border px-5 py-4",
-                      mcuData.status === "passed" ? "border-emerald-200 bg-emerald-50" :
-                      mcuData.status === "failed" ? "border-red-200 bg-red-50" :
-                      mcuData.status === "scheduled" ? "border-blue-200 bg-blue-50" :
+                      mcuData.status === "PASSED" ? "border-emerald-200 bg-emerald-50" :
+                      mcuData.status === "FAILED" ? "border-red-200 bg-red-50" :
                       "border-amber-200 bg-amber-50"
                     )}>
                       <div className={cn(
                         "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-                        mcuData.status === "passed" ? "bg-emerald-100 text-emerald-600" :
-                        mcuData.status === "failed" ? "bg-red-100 text-red-600" :
-                        mcuData.status === "scheduled" ? "bg-blue-100 text-blue-600" :
+                        mcuData.status === "PASSED" ? "bg-emerald-100 text-emerald-600" :
+                        mcuData.status === "FAILED" ? "bg-red-100 text-red-600" :
                         "bg-amber-100 text-amber-600"
                       )}>
-                        {mcuData.status === "passed" ? <CheckCircle2 className="h-6 w-6" /> :
-                         mcuData.status === "failed" ? <XCircle className="h-6 w-6" /> :
-                         mcuData.status === "scheduled" ? <CalendarDays className="h-6 w-6" /> :
+                        {mcuData.status === "PASSED" ? <CheckCircle2 className="h-6 w-6" /> :
+                         mcuData.status === "FAILED" ? <XCircle className="h-6 w-6" /> :
                          <Clock className="h-6 w-6" />}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">MCU Status</p>
                         <p className={cn(
-                          "text-lg font-semibold capitalize",
-                          mcuData.status === "passed" ? "text-emerald-700" :
-                          mcuData.status === "failed" ? "text-red-700" :
-                          mcuData.status === "scheduled" ? "text-blue-700" :
+                          "text-lg font-semibold",
+                          mcuData.status === "PASSED" ? "text-emerald-700" :
+                          mcuData.status === "FAILED" ? "text-red-700" :
                           "text-amber-700"
                         )}>
-                          {mcuData.status === "pending" ? "Pending" :
-                           mcuData.status === "scheduled" ? "Scheduled" :
-                           mcuData.status === "passed" ? "Passed" : "Failed"}
+                          {mcuData.status === "PASSED" ? "Passed" :
+                           mcuData.status === "FAILED" ? "Failed" : "Pending"}
                         </p>
                       </div>
                     </div>
 
-                    {/* MCU Result Files */}
-                    {mcuData.files.length > 0 && (
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-foreground">MCU Result Documents</p>
-                        <div className="space-y-2">
-                          {mcuData.files.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-4 py-3 transition-colors hover:bg-muted/40">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
-                                  <FileText className="h-4.5 w-4.5" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                                  <p className="text-xs text-muted-foreground">{file.size} &middot; Uploaded {file.uploadedAt}</p>
-                                </div>
-                              </div>
-                              <button type="button" className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/10 hover:text-accent">
-                                <Download className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                    {/* MCU Description */}
+                    {mcuData.description && (
+                      <div className="rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
+                        <p className="text-sm font-medium text-foreground mb-1">Notes</p>
+                        <p className="text-sm text-muted-foreground">{mcuData.description}</p>
                       </div>
                     )}
 
-                    {mcuData.files.length === 0 && (
+                    {/* MCU Document */}
+                    {mcuData.documentName ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-foreground">MCU Result Document</p>
+                        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-4 py-3 transition-colors hover:bg-muted/40">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <p className="truncate text-sm font-medium text-foreground">{mcuData.documentName}</p>
+                          </div>
+                          {mcuData.documentUrl && (
+                            <a href={mcuData.documentUrl} target="_blank" rel="noopener noreferrer" className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/10 hover:text-accent">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
                       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 py-8">
                         <FileText className="h-8 w-8 text-muted-foreground/40" />
                         <p className="mt-2 text-sm text-muted-foreground">No documents uploaded yet</p>
@@ -1158,44 +1315,26 @@ export default function CandidateProfilePage() {
                       </p>
                     </div>
                   </div>
-                </SectionCard>
+                </SectionCard>}
               </div>
 
               {/* Step 9: Onboarding - View Only */}
               <div className={cn("transition-all duration-300", currentStep === 9 ? "animate-fade-in" : "hidden")}>
-                <SectionCard title="Onboarding Details" subtitle="Your onboarding information as assigned by HR">
+                {onboardingData && <><SectionCard title="Onboarding Details" subtitle="Your onboarding information as assigned by HR">
                   <div className="space-y-6">
                     {/* Onboarding Status Banner */}
-                    {onboardingData.employeeId ? (
-                      <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                          <CheckCircle2 className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Onboarding Status</p>
-                          <p className="text-lg font-semibold text-emerald-700">Confirmed</p>
-                        </div>
+                    <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                        <CheckCircle2 className="h-6 w-6" />
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                          <Clock className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Onboarding Status</p>
-                          <p className="text-lg font-semibold text-amber-700">Awaiting Assignment</p>
-                        </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Onboarding Status</p>
+                        <p className="text-lg font-semibold text-emerald-700">Confirmed</p>
                       </div>
-                    )}
+                    </div>
 
                     {/* Onboarding Details Grid */}
                     <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-                      <ReadOnlyField label="Employee ID" value={onboardingData.employeeId} icon={Shield} />
-                      <ReadOnlyField label="Department" value={onboardingData.department} icon={Building2} />
-                      <ReadOnlyField label="Job Title" value={onboardingData.jobTitle} icon={Briefcase} />
-                      <ReadOnlyField label="Job Level" value={onboardingData.jobLevel} icon={Award} />
-                      <ReadOnlyField label="Superior" value={onboardingData.superior} icon={UserCheck} />
-                      <ReadOnlyField label="Join Date" value={onboardingData.joinDate} icon={CalendarDays} />
                       <ReadOnlyField label="Job Placement" value={onboardingData.jobPlacement} icon={MapPin} />
                     </div>
                   </div>
@@ -1204,7 +1343,7 @@ export default function CandidateProfilePage() {
                 {/* Facilities Table */}
                 <div className="mt-6">
                   <SectionCard title="Facilities" subtitle="Equipment and facilities assigned to you">
-                    {facilitiesData.length === 0 ? (
+                    {onboardingData.facilities.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 text-center">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
                           <Package className="h-6 w-6 text-muted-foreground/60" />
@@ -1227,10 +1366,10 @@ export default function CandidateProfilePage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {facilitiesData.map((facility, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
-                                <TableCell className="font-medium">{facility.items}</TableCell>
+                            {onboardingData.facilities.map((facility) => (
+                              <TableRow key={facility.id}>
+                                <TableCell className="text-center text-muted-foreground font-medium">{facility.id}</TableCell>
+                                <TableCell className="font-medium">{facility.item}</TableCell>
                                 <TableCell>{facility.qty}</TableCell>
                                 <TableCell>{facility.unit}</TableCell>
                                 <TableCell>{facility.inventoryNo}</TableCell>
@@ -1250,7 +1389,7 @@ export default function CandidateProfilePage() {
                 {/* Onboarding Program Table */}
                 <div className="mt-6">
                   <SectionCard title="Onboarding Program" subtitle="Scheduled onboarding activities and training">
-                    {onboardingProgramData.length === 0 ? (
+                    {onboardingData.programs.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 text-center">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
                           <BookOpen className="h-6 w-6 text-muted-foreground/60" />
@@ -1272,9 +1411,9 @@ export default function CandidateProfilePage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {onboardingProgramData.map((program, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
+                            {onboardingData.programs.map((program) => (
+                              <TableRow key={program.id}>
+                                <TableCell className="text-center text-muted-foreground font-medium">{program.id}</TableCell>
                                 <TableCell className="font-medium">{program.program}</TableCell>
                                 <TableCell>{program.date}</TableCell>
                                 <TableCell>{program.location}</TableCell>
@@ -1298,7 +1437,7 @@ export default function CandidateProfilePage() {
                 </div>
 
                 {/* Confirm & Accept Offer */}
-                {onboardingData.employeeId && !isAccepted && (
+                {!isAccepted && (
                   <div className="mt-6">
                     <div className="rounded-xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 text-center">
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
@@ -1347,6 +1486,7 @@ export default function CandidateProfilePage() {
                     </div>
                   </div>
                 )}
+                </>}
               </div>
 
               {/* Navigation Footer */}
@@ -1383,10 +1523,15 @@ export default function CandidateProfilePage() {
                     <ChevronLeft className="h-4 w-4" />Previous
                   </Button>
                   <div className="flex items-center gap-1.5">
-                    {STEPS.map((step) => {
+                    {STEPS.filter((step) => {
+                      if (step.id === 7) return isSubmitted && interviewData !== null;
+                      if (step.id === 8) return mcuData !== null;
+                      if (step.id === 9) return onboardingData !== null;
+                      return true;
+                    }).map((step) => {
                       const locked = !isStepAccessible(step.id);
                       return (
-                        <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6 bg-accent" : completedSteps.has(step.id) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} />
+                        <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6 bg-accent" : (completedSteps.has(step.id) && isSectionComplete(step.id)) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} />
                       );
                     })}
                   </div>

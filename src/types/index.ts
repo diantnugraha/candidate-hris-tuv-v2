@@ -480,3 +480,68 @@ export interface CandidateAssessment {
   createdAt: string;
   updatedAt: string;
 }
+
+// --- Interview/Assessment Progress (from HRIS) ---
+
+export interface InterviewStageStatus {
+  status: string;
+  passed: boolean;
+  failed: boolean;
+  pending: boolean;
+  locked: boolean;
+  description: string;
+}
+
+export interface InterviewProgress {
+  interview1: InterviewStageStatus;
+  interview2: InterviewStageStatus;
+  currentStage: "interview1" | "interview2" | "mcu" | "completed" | "failed";
+  interviewStarted: boolean;
+  interviewStartedAt: string | null;
+  interviewDate: string | null;
+  interviewType: string | null;
+  allPassed: boolean;
+  anyFailed: boolean;
+}
+
+// --- MCU Status (from HRIS) ---
+
+export interface McuStatus {
+  status: string;
+  description: string;
+  documentUrl: string | null;
+  documentName: string | null;
+}
+
+// --- Onboarding (from HRIS) ---
+
+export interface OnboardingFacility {
+  id: number;
+  inventoryNo: string;
+  item: string;
+  qty: number;
+  unit: string;
+  condition: string;
+  status: string;
+}
+
+export interface OnboardingProgram {
+  id: number;
+  program: string;
+  date: string;
+  location: string;
+  pic: string;
+  status: string;
+}
+
+export interface OnboardingData {
+  id: number;
+  candidateId: number;
+  jobPlacement: string;
+  document: string;
+  documentCandidate: string;
+  facilities: OnboardingFacility[];
+  programs: OnboardingProgram[];
+  createdAt: string | null;
+  updatedAt: string | null;
+}
