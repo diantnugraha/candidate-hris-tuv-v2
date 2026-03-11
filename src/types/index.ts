@@ -489,7 +489,6 @@ export interface InterviewStageStatus {
   failed: boolean;
   pending: boolean;
   locked: boolean;
-  description: string;
 }
 
 export interface InterviewProgress {

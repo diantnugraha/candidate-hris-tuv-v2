@@ -1221,11 +1221,6 @@ export default function CandidateProfilePage() {
                                   {stage.data.locked ? "Locked" : stage.data.passed ? "Passed" : stage.data.failed ? "Failed" : "Pending"}
                                 </Badge>
                               </div>
-                              {!stage.data.locked && stage.data.description && (
-                                <div className="mt-3 rounded-lg bg-white/60 border border-border/30 px-3 py-2.5">
-                                  <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{stage.data.description}</p>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>

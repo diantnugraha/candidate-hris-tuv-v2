@@ -596,8 +596,8 @@ export const candidateProfileService = {
       const response = await get<{
         success: boolean;
         data: {
-          interview1: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean; description: string };
-          interview2: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean; description: string };
+          interview1: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean };
+          interview2: { status: string; passed: boolean; failed: boolean; pending: boolean; locked: boolean };
           current_stage: string;
           interview_started: boolean;
           interview_started_at: string | null;
@@ -766,7 +766,7 @@ export const candidateProfileService = {
     // If all sections saved successfully, mark biodata as submitted in backend
     if (errors.length === 0) {
       try {
-        await post<ApiResponse<null>>("/candidate-profile/submit");
+        await post<ApiResponse<null>>("/v1/candidate-profile/submit");
       } catch {
         errors.push("Failed to submit biodata");
       }
