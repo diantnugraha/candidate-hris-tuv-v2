@@ -677,6 +677,7 @@ export const candidateProfileService = {
           document_candidate: string;
           facilities: { id: number; inventory_no: string; item: string; qty: number; unit: string; condition: string; status: string }[];
           programs: { id: number; program: string; date: string; location: string; pic: string; status: string }[];
+          onboarding_accepted_at: string | null;
           created_at: string | null;
           updated_at: string | null;
         } | null;
@@ -709,6 +710,7 @@ export const candidateProfileService = {
               pic: p.pic,
               status: p.status,
             })),
+            onboardingAcceptedAt: d.onboarding_accepted_at,
             createdAt: d.created_at,
             updatedAt: d.updated_at,
           },
@@ -718,6 +720,32 @@ export const candidateProfileService = {
       return { success: true, data: null };
     } catch {
       return { success: false, message: "Failed to fetch onboarding data" };
+    }
+  },
+
+  // ==================== Accept Onboarding ====================
+  async acceptOnboarding(): Promise<ApiResponse<OnboardingData>> {
+    try {
+      const response = await post<{
+        success: boolean;
+        data: {
+          id: number;
+          candidateId: number;
+          onboardingAcceptedAt: string | null;
+        };
+      }>("/v1/candidate-auth/accept-onboarding", {});
+
+      if (response.success && response.data) {
+        // Re-fetch full onboarding data to get updated state
+        const updated = await candidateProfileService.getOnboarding();
+        if (updated.success && updated.data) {
+          return { success: true, data: updated.data };
+        }
+      }
+
+      return { success: false, message: "Failed to accept onboarding offer" };
+    } catch {
+      return { success: false, message: "Failed to accept onboarding offer" };
     }
   },
 

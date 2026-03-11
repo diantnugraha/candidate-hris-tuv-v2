@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
+
+// Wait for Zustand persist to finish hydrating from localStorage
+function useHasHydrated() {
+  return useSyncExternalStore(
+    (onStoreChange) => useAuthStore.persist.onFinishHydration(onStoreChange),
+    () => useAuthStore.persist.hasHydrated(),
+    () => false // SSR: not hydrated yet
+  );
+}
 
 export default function ProtectedLayout({
   children,
@@ -11,9 +20,13 @@ export default function ProtectedLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuthStore();
+  const hasHydrated = useHasHydrated();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Wait for Zustand to finish restoring state from localStorage
+    if (!hasHydrated) return;
+
     // Check both Zustand state and actual localStorage
     const storedData = localStorage.getItem("candidate-auth-store");
     const hasStoredAuth = (() => {
@@ -36,7 +49,7 @@ export default function ProtectedLayout({
     }
 
     setIsChecking(false);
-  }, [isAuthenticated, token, router]);
+  }, [hasHydrated, isAuthenticated, token, router]);
 
   // Listen for storage changes (cleared from another tab or DevTools)
   useEffect(() => {

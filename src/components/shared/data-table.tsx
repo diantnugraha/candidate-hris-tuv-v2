@@ -88,16 +88,12 @@ export function DataTable<T extends object>({
   };
 
   const getValue = (row: T, key: string): unknown => {
-    const keys = key.split(".");
-    let value: unknown = row;
-    for (const k of keys) {
-      if (value && typeof value === "object" && k in value) {
-        value = (value as Record<string, unknown>)[k];
-      } else {
-        return undefined;
+    return key.split(".").reduce<unknown>((acc, k) => {
+      if (acc && typeof acc === "object" && k in acc) {
+        return (acc as Record<string, unknown>)[k];
       }
-    }
-    return value;
+      return undefined;
+    }, row);
   };
 
   return (

@@ -84,6 +84,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
 import { useCandidateProfile } from "@/hooks/use-candidate-profile";
 import { useRecruitmentProgress } from "@/hooks/use-recruitment-progress";
+import { candidateProfileService } from "@/services/candidate-profile.service";
 import type {
   EducationalBackground,
   WorkExperience,
@@ -139,6 +140,7 @@ export default function CandidateProfilePage() {
     interview: interviewData,
     mcu: mcuData,
     onboarding: onboardingData,
+    refetch: refetchProgress,
   } = useRecruitmentProgress(user?.id, isSubmitted);
 
   // Get initials from name
@@ -176,16 +178,48 @@ export default function CandidateProfilePage() {
   }, [user?.agreementAcceptedAt]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isAccepted, setIsAccepted] = React.useState(false);
+  const [isAccepting, setIsAccepting] = React.useState(false);
   const [completedSteps, setCompletedSteps] = React.useState<Set<number>>(new Set());
   const formRef = React.useRef<HTMLDivElement>(null);
 
   // Sync UI state when isSubmitted changes (from hook)
+  // Determine the furthest completed section and navigate to the next one
   React.useEffect(() => {
     if (isSubmitted) {
-      setCompletedSteps(new Set([0, 1, 2, 3, 4, 5, 6]));
-      setCurrentStep(7); // Go to Interview step
+      const completed = new Set([0, 1, 2, 3, 4, 5, 6]);
+
+      // MCU passed + onboarding data available → navigate to Onboarding, mark Interview & MCU complete
+      if (mcuData?.status === "PASSED" && onboardingData !== null) {
+        completed.add(7);
+        completed.add(8);
+        setCompletedSteps(completed);
+        setCurrentStep(9);
+      }
+      // Interview all passed + MCU data available → navigate to MCU, mark Interview complete
+      else if (interviewData?.allPassed === true && mcuData !== null) {
+        completed.add(7);
+        setCompletedSteps(completed);
+        setCurrentStep(8);
+      }
+      // Interview started → navigate to Interview
+      else if (interviewData !== null && interviewData.interviewStarted) {
+        setCompletedSteps(completed);
+        setCurrentStep(7);
+      }
+      // Otherwise stay on Assessment — candidate waits for HR to schedule interview
+      else {
+        setCompletedSteps(completed);
+        setCurrentStep(6);
+      }
     }
-  }, [isSubmitted]);
+  }, [isSubmitted, interviewData, mcuData, onboardingData]);
+
+  // Sync isAccepted from onboarding data
+  React.useEffect(() => {
+    if (onboardingData?.onboardingAcceptedAt) {
+      setIsAccepted(true);
+    }
+  }, [onboardingData]);
 
   // Sequential step accessibility
   const isStepAccessible = (stepId: number): boolean => {
@@ -193,10 +227,9 @@ export default function CandidateProfilePage() {
     if (!hasConsented) return false;
     // Steps 1-6: all previous sections must be complete
     if (stepId >= 1 && stepId <= 6) {
-      for (let i = 1; i < stepId; i++) {
-        if (!isSectionComplete(i)) return false;
-      }
-      return true;
+      return Array.from({ length: stepId - 1 }, (_, i) => i + 1).every(
+        (i) => isSectionComplete(i)
+      );
     }
     // Step 7 (Interview): requires submitted application + HR has started interview process
     if (stepId === 7) return isSubmitted && interviewData !== null && interviewData.interviewStarted;
@@ -273,6 +306,8 @@ export default function CandidateProfilePage() {
       case 4: return isFamilyComplete();
       case 5: return isTrainingComplete();
       case 6: return true; // Assessment has no required fields
+      case 7: return interviewData?.allPassed === true; // Interview complete when all passed
+      case 8: return mcuData?.status === "PASSED"; // MCU complete when passed
       default: return false;
     }
   };
@@ -364,17 +399,18 @@ export default function CandidateProfilePage() {
     if (currentStep !== 6) return;
 
     // Validate all sections (1-5) before submitting
-    for (let i = 1; i <= 5; i++) {
-      if (!isSectionComplete(i)) {
-        const sectionLabel = SECTION_LABELS[i] || STEPS[i]?.label;
-        const error = getSectionValidationError(i);
-        toast.error(error || `Please complete ${sectionLabel}`, {
-          description: `Complete the ${sectionLabel} section before submitting.`,
-        });
-        setCurrentStep(i);
-        formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
+    const incompleteSection = Array.from({ length: 5 }, (_, i) => i + 1).find(
+      (i) => !isSectionComplete(i)
+    );
+    if (incompleteSection !== undefined) {
+      const sectionLabel = SECTION_LABELS[incompleteSection] || STEPS[incompleteSection]?.label;
+      const error = getSectionValidationError(incompleteSection);
+      toast.error(error || `Please complete ${sectionLabel}`, {
+        description: `Complete the ${sectionLabel} section before submitting.`,
+      });
+      setCurrentStep(incompleteSection);
+      formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
 
     setIsSubmitting(true);
@@ -389,7 +425,7 @@ export default function CandidateProfilePage() {
         // isSubmitted is now managed by the hook - UI syncs via useEffect
         setCompletedSteps((prev) => {
           const next = new Set(prev);
-          for (let i = 0; i <= 6; i++) next.add(i);
+          Array.from({ length: 7 }, (_, i) => i).forEach((i) => next.add(i));
           return next;
         });
         setCurrentStep(7);
@@ -405,8 +441,22 @@ export default function CandidateProfilePage() {
     }
   };
 
-  const handleAcceptOffer = () => {
-    setIsAccepted(true);
+  const handleAcceptOffer = async () => {
+    setIsAccepting(true);
+    try {
+      const result = await candidateProfileService.acceptOnboarding();
+      if (result.success) {
+        setIsAccepted(true);
+        refetchProgress();
+        toast.success("Offer accepted successfully! Welcome aboard!");
+      } else {
+        toast.error(result.message || "Failed to accept offer");
+      }
+    } catch {
+      toast.error("Failed to accept offer. Please try again.");
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
   // Education handlers
@@ -1444,9 +1494,8 @@ export default function CandidateProfilePage() {
                       </p>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button className="mt-5 gap-2 px-8" size="lg">
-                            <CheckCircle2 className="h-5 w-5" />
-                            Confirm & Accept Offer
+                          <Button className="mt-5 gap-2 px-8" size="lg" disabled={isAccepting}>
+                            {isAccepting ? (<><Loader2 className="h-5 w-5 animate-spin" />Accepting...</>) : (<><CheckCircle2 className="h-5 w-5" />Confirm & Accept Offer</>)}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -1457,8 +1506,8 @@ export default function CandidateProfilePage() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleAcceptOffer}>
+                            <AlertDialogCancel disabled={isAccepting}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleAcceptOffer} disabled={isAccepting}>
                               Yes, I Accept
                             </AlertDialogAction>
                           </AlertDialogFooter>

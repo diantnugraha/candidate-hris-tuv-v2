@@ -541,6 +541,7 @@ export interface OnboardingData {
   documentCandidate: string;
   facilities: OnboardingFacility[];
   programs: OnboardingProgram[];
+  onboardingAcceptedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
