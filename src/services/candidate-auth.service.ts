@@ -29,6 +29,8 @@ export interface Candidate {
   createdAt: string | null;
   updatedAt: string | null;
   candidateCode: string | null;
+  jobTitleName: string | null;
+  isSubmitted: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -127,6 +129,8 @@ interface ApiCandidate {
   created_at: string | null;
   updated_at: string | null;
   candidate_code: string | null;
+  job_title_name: string | null;
+  is_submitted: boolean;
 }
 
 // --- Mapping ---
@@ -159,6 +163,8 @@ function mapCandidate(api: ApiCandidate): Candidate {
     createdAt: api.created_at,
     updatedAt: api.updated_at,
     candidateCode: api.candidate_code,
+    jobTitleName: api.job_title_name,
+    isSubmitted: api.is_submitted || false,
   };
 }
 

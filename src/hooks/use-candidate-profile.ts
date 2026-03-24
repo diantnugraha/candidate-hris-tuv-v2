@@ -204,6 +204,12 @@ export function useCandidateProfile(candidateId?: number | string) {
       let loadedPersonalInfo = initialPersonalInfo;
       if (profileRes.success && profileRes.data) {
         const c = profileRes.data;
+
+        // Derive submission status from backend (source of truth)
+        if (c.isSubmitted) {
+          setIsSubmitted(true);
+          saveSubmissionStatus(candidateId);
+        }
         loadedPersonalInfo = {
           fullName: c.fullname || "",
           idNumber: c.idNo || "",

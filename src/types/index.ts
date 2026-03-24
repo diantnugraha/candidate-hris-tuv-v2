@@ -8,6 +8,7 @@ export interface User {
   employeeId?: string;
   candidateCode?: string | null;
   agreementAcceptedAt?: string | null;
+  jobTitleName?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }

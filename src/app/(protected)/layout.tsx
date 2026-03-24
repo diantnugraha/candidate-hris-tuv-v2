@@ -19,7 +19,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuthStore();
+  const { isAuthenticated, token, checkAuth } = useAuthStore();
   const hasHydrated = useHasHydrated();
   const [isChecking, setIsChecking] = useState(true);
 
@@ -48,8 +48,9 @@ export default function ProtectedLayout({
       return;
     }
 
-    setIsChecking(false);
-  }, [hasHydrated, isAuthenticated, token, router]);
+    // Refresh user data from API to ensure latest profile fields
+    checkAuth().finally(() => setIsChecking(false));
+  }, [hasHydrated, isAuthenticated, token, router, checkAuth]);
 
   // Listen for storage changes (cleared from another tab or DevTools)
   useEffect(() => {

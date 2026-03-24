@@ -5,7 +5,15 @@
       "Bash(npm run build)",
       "Bash(npm ls @radix-ui/react-radio-group)",
       "Bash(ls -la /Users/diantnugraha/Documents/Documents/Development/candidate-recruitment-hris/src/app/\\\\\\(protected\\\\\\)/)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(git commit:*)",
+      "Bash(grep -r \"job_title\\\\|job_vacancy\\\\|position\" /Users/diantnugraha/Documents/Documents/Development/recruitment-hris-api/src/routes/*.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s http://localhost:3000/v1/candidate-auth/profile)",
+      "Bash(curl -s http://localhost:3001/v1/candidate-auth/profile)",
+      "Bash(node -e \":*)",
+      "Bash(curl -s http://localhost:3001/v1/candidate-auth/login -H \"Content-Type: application/json\" -d '{\"\"\"\"email\"\"\"\":\"\"\"\"batijas985@fabaos.com\"\"\"\",\"\"\"\"password\"\"\"\":\"\"\"\"820BD40C\"\"\"\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''data'''',{}\\).get\\(''''candidate'''',{}\\), indent=2\\)\\)\")"
     ]
   }
 }

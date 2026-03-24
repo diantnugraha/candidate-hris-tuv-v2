@@ -47,6 +47,7 @@ export const useAuthStore = create<AuthStore>()(
               role: "candidate",
               candidateCode: candidate.candidateCode,
               agreementAcceptedAt: candidate.agreementAcceptedAt,
+              jobTitleName: candidate.jobTitleName,
               createdAt: candidate.createdAt,
               updatedAt: candidate.updatedAt,
             };
@@ -90,6 +91,7 @@ export const useAuthStore = create<AuthStore>()(
               role: "candidate",
               candidateCode: candidate.candidateCode,
               agreementAcceptedAt: candidate.agreementAcceptedAt,
+              jobTitleName: candidate.jobTitleName,
               createdAt: candidate.createdAt,
               updatedAt: candidate.updatedAt,
             };
@@ -151,6 +153,7 @@ export const useAuthStore = create<AuthStore>()(
               role: "candidate",
               candidateCode: candidate.candidateCode,
               agreementAcceptedAt: candidate.agreementAcceptedAt,
+              jobTitleName: candidate.jobTitleName,
               createdAt: candidate.createdAt,
               updatedAt: candidate.updatedAt,
             };

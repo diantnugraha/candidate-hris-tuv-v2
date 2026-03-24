@@ -1104,7 +1104,7 @@ export default function CandidateProfilePage() {
                 <InfoBanner submitted={isSubmitted} />
                 <SectionCard title="Job Vacancy" subtitle="Position you are applying for">
                   <div className="rounded-lg bg-accent/5 border border-accent/20 px-4 py-3">
-                    <p className="text-sm font-medium text-accent">IT & Digital Transformation Officer</p>
+                    <p className="text-sm font-medium text-accent">{user?.jobTitleName || "-"}</p>
                   </div>
                 </SectionCard>
 
