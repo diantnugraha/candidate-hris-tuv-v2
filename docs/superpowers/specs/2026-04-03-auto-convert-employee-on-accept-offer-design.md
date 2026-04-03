@@ -16,7 +16,7 @@ The `convertToEmployee()` function exists as a stub with TODO comments at `src/s
 | Decision | Choice |
 |----------|--------|
 | Trigger | Automatic on accept offer (no HR approval needed) |
-| Email | Welcome email with login credentials via existing `sendWelcomeEmail()` |
+| Email | Welcome email with login credentials via existing `sendWelcomeEmail()` (called internally by `userRestService.createUser()`) |
 | User role | Default `roleId: 1` (Employee) via existing `autoCreateUserForEmployee()` |
 | Error handling | Fire-and-forget async; accept offer succeeds regardless of conversion outcome |
 | Approach | Integrate directly in `acceptOnboarding` flow (no event system) |
@@ -36,68 +36,81 @@ acceptOnboarding(candidateId)
         |
         +-- Gather data:
         |   +-- CandidateRecruitment -> personal info
-        |   +-- candidate_recruitment_detail -> job_title_id, employee_request_id
-        |   +-- candidate_recruitment_onboarding -> job_placement, join_date
-        |   +-- EmployeeRequest -> departmentId
+        |   +-- candidate_recruitment_detail -> job_title_id, employee_request_id (String, must parse to Number)
+        |   +-- candidate_recruitment_onboarding -> job_placement, join_date (String?, must parse to Date)
+        |   +-- EmployeeRequest -> departmentId (nullable)
         |
         +-- Map & create Employee via employeeService.createEmployee()
         |
         +-- employeeService.createEmployee() internally:
             +-- Create Employee record (UUID auto-generated)
             +-- autoCreateUserForEmployee() -> generate random password, create User (roleId: 1)
-            +-- sendWelcomeEmail() -> email + password to candidate
+            +-- userRestService.createUser() internally calls sendWelcomeEmail()
 ```
 
 ### Data Mapping: Candidate -> Employee
 
-| Employee Field | Source | Source Field |
-|----------------|--------|-------------|
-| name | CandidateRecruitment | fullname |
-| email | CandidateRecruitment | email |
-| gender | CandidateRecruitment | gender |
-| nik | CandidateRecruitment | id_no |
-| birthDate | CandidateRecruitment | birth_date |
-| maritalStatus | CandidateRecruitment | marrital_status |
-| religion | CandidateRecruitment | religion |
-| ethnic | CandidateRecruitment | ethnic_group |
-| nationality | CandidateRecruitment | citizenship |
-| address | CandidateRecruitment | address |
-| contact | CandidateRecruitment | mobile_phone |
-| location | candidate_recruitment_onboarding | job_placement |
-| joinDate | candidate_recruitment_onboarding | join_date (parsed to Date) |
-| departmentId | EmployeeRequest | departmentId |
-| status | hardcoded | "active" |
+| Employee Field | Source | Source Field | Notes |
+|----------------|--------|-------------|-------|
+| name | CandidateRecruitment | fullname | |
+| email | CandidateRecruitment | email | |
+| gender | CandidateRecruitment | gender | CandidateGender enum ("M"/"F") -> string, verify compatibility with existing Employee records |
+| nik | CandidateRecruitment | id_no | |
+| birthDate | CandidateRecruitment | birth_date | DateTime?, can be null |
+| maritalStatus | CandidateRecruitment | marrital_status | |
+| religion | CandidateRecruitment | religion | |
+| ethnic | CandidateRecruitment | ethnic_group | Nullable |
+| nationality | CandidateRecruitment | citizenship | **Requires adding `nationality` to `CreateEmployeeServiceData`** |
+| address | CandidateRecruitment | address | |
+| contact | CandidateRecruitment | mobile_phone | |
+| jobTitleId | candidate_recruitment_detail | job_title_id | **Requires adding `jobTitleId` to both `CreateEmployeeServiceData` and `CreateEmployeeData`**. Int -> BigInt conversion needed |
+| location | candidate_recruitment_onboarding | job_placement | |
+| joinDate | candidate_recruitment_onboarding | join_date | String? -> Date. Must validate non-null and parseable, fallback to current date if null |
+| departmentId | EmployeeRequest | departmentId | Nullable (Int?), Employee may have no department |
+| status | hardcoded | "active" | |
+
+### Prerequisite Fixes
+
+These must be done before implementing `convertToEmployee()`:
+
+1. **Add `nationality` to `CreateEmployeeServiceData`** in `employeeService.ts` and forward to repository
+2. **Add `jobTitleId` to both `CreateEmployeeServiceData` and `CreateEmployeeData`** and map to `Employee.jobTitleId` in repository `create()` function
+3. **Fix `autoCreateUserForEmployee()` bug** at `employeeService.ts:190` — `employee.employeeSuperiorId` should be `employee.superiorId` (pre-existing bug)
+
+### Type Conversion Notes
+
+- `candidate_recruitment_detail.employee_request_id` is `String @db.Text` — must use `Number()` or `parseInt()` when passing to repository functions that expect `number`
+- `candidate_recruitment_onboarding.join_date` is `String? @db.VarChar(20)` — must parse to `Date` with defensive handling for null/unparseable values
+- `candidate_recruitment_detail.job_title_id` is `Int` — Employee's `jobTitleId` is `BigInt`, conversion needed via `BigInt()`
 
 ### Error Handling
 
 - `convertToEmployee()` is called as fire-and-forget: `.catch()` logs error with `[CONVERT-EMPLOYEE]` prefix
 - If conversion fails, `acceptOnboarding` still succeeds — candidate sees "Offer accepted"
-- HR already receives in-app notification and can manually follow up if conversion fails
+- On conversion failure, send in-app notification to HR (reuse `sendRecruitmentNotification`) with type `CONVERSION_FAILED` so HR can investigate and manually convert if needed
 
 ### Duplicate Prevention
 
-- `employeeService.createEmployee()` already checks for email duplicates (`ConflictError`)
-- If candidate was already converted, fire-and-forget fails silently (logged)
-- No additional guard needed
+- Check at start of `convertToEmployee()`: query for existing Employee with same email before proceeding. If found, log and return early (idempotent)
+- `employeeService.createEmployee()` also checks for email duplicates as a second guard (`ConflictError`)
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/services/candidateService.ts` | 1. Implement `convertToEmployee()` body (replace TODOs). 2. Add fire-and-forget call at end of `acceptOnboarding()` |
-
-Only 1 file modified. Reuses existing `employeeService.createEmployee()` which handles employee creation, user account creation, and welcome email sending.
+| `src/services/employeeService.ts` | Add `nationality` and `jobTitleId` to `CreateEmployeeServiceData`, forward to repository |
+| `src/repositories/employeeRepository.ts` | Add `jobTitleId` to `CreateEmployeeData`, map in `create()` function |
+| `src/services/employeeService.ts` | Fix `employee.employeeSuperiorId` -> `employee.superiorId` in `autoCreateUserForEmployee()` |
+| `src/services/candidateService.ts` | Implement `convertToEmployee()` body + add fire-and-forget call at end of `acceptOnboarding()` |
 
 ## Reused Existing Infrastructure
 
-- `employeeService.createEmployee()` — creates employee record
-- `autoCreateUserForEmployee()` — generates random password, creates user with roleId 1
-- `userRestService.createUser()` — creates user, sends welcome email
-- `emailService.sendWelcomeEmail()` — sends credentials via Mailgun
-- `candidateRepository.findById()` — fetch candidate data
-- `candidateDetailRepository` — fetch job title and employee request linkage
-- `onboardingRepository.findOnboardingByCandidateId()` — fetch onboarding data
-- `employeeRequestRepository` — fetch department info
+- `employeeService.createEmployee()` — creates employee record, triggers `autoCreateUserForEmployee()` which calls `userRestService.createUser()` (which internally sends welcome email via Mailgun)
+- `candidateRepository.findById()` — fetch candidate personal data
+- `candidateDetailRepository` — fetch job_title_id and employee_request_id
+- `onboardingRepository.findOnboardingByCandidateId()` — fetch onboarding data (job_placement, join_date)
+- `employeeRequestRepository` — fetch departmentId
+- `sendRecruitmentNotification()` — notify HR on conversion failure
 
 ## Out of Scope
 
