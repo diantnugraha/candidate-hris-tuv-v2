@@ -134,7 +134,7 @@ export function Sidebar() {
         <div
           className={cn(
             "flex items-center border-b border-gray-100",
-            sidebarCollapsed ? "justify-center px-2 h-16" : "justify-between px-5 h-16"
+            sidebarCollapsed ? "justify-center px-2 h-[75px]" : "justify-between px-5 h-[75px]"
           )}
         >
           <Link href="/dashboard" className="flex items-center gap-3">

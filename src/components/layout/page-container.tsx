@@ -15,7 +15,7 @@ export function PageContainer({ children, className }: PageContainerProps) {
   return (
     <main
       className={cn(
-        "min-h-[calc(100vh-3.5rem)] transition-all duration-300",
+        "min-h-[calc(100vh-75px)] transition-all duration-300",
         sidebarCollapsed ? "ml-16" : "ml-64",
         className
       )}
