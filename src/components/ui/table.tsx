@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  *
  * - Thead: bg #F8F9FB, uppercase, height 50px, whiteSpace nowrap
  * - Th text: fontSize 12px (sm), fontWeight 500, color gray-900
- * - Td text: fontSize 12px (sm), fontWeight 400
+ * - Td text: fontSize 14px (0.875rem), fontWeight 400
  * - Tr border: 1px solid rgba(gray-500, 0.2)
  * - Tr hover: bg #EDF0F2
  */
@@ -144,7 +144,7 @@ const TableCell = React.forwardRef<
     )}
     style={{
       fontWeight: 400,
-      fontSize: "0.75rem",
+      fontSize: "0.875rem",
       padding: "16px 8px 16px 16px",
       color: "var(--hsd-ui-color-gray-900)",
     }}
