@@ -126,9 +126,10 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col bg-white border-r border-gray-100 transition-all duration-300",
+          "fixed left-0 z-40 flex flex-col bg-white border-r border-gray-100 transition-all duration-300",
           sidebarCollapsed ? "w-16" : "w-64"
         )}
+        style={{ top: "75px", height: "calc(100vh - 75px)" }}
       >
         {/* Header */}
         <div

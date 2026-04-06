@@ -1,19 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
-import { Bell, Search, Menu, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu as MenuIcon, LogOut, ChevronDown } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -22,19 +15,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { useAppStore } from "@/stores/app-store";
 import { useAuthStore } from "@/stores/auth-store";
-import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   title?: string;
   subtitle?: string;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header(_props: HeaderProps) {
   const router = useRouter();
-  const { sidebarCollapsed, toggleSidebar } = useAppStore();
-  const { logout, isLoading } = useAuthStore();
+  const { toggleSidebarCollapse } = useAppStore();
+  const { user, logout, isLoading } = useAuthStore();
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
 
   const handleSignOut = async () => {
@@ -43,97 +42,150 @@ export function Header({ title, subtitle }: HeaderProps) {
     router.push("/login");
   };
 
+  const getUserInitials = () => {
+    if (user?.name) {
+      const names = user.name.split(" ");
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+      }
+      return user.name.substring(0, 2).toUpperCase();
+    }
+    return "U";
+  };
+
   return (
     <header
-      className={cn(
-        "sticky top-0 z-30 flex h-[75px] items-center justify-between bg-white border-b border-gray-200 px-6 transition-all duration-300",
-        sidebarCollapsed ? "ml-16" : "ml-64"
-      )}
+      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-white"
+      style={{
+        height: "75px",
+        padding: "0 24px",
+        borderBottom: "1px solid #d0d6dd",
+      }}
     >
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 lg:hidden"
-          onClick={toggleSidebar}
+      {/* Left side — hamburger + logo */}
+      <div className="flex items-center" style={{ gap: "16px" }}>
+        <button
+          onClick={toggleSidebarCollapse}
+          className="flex items-center justify-center cursor-pointer transition-colors"
+          style={{ color: "rgba(120, 134, 127, 1)" }}
         >
-          <Menu className="h-5 w-5" />
-        </Button>
-        <div>
-          {title && (
-            <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-          )}
-          {subtitle && (
-            <p className="text-sm text-gray-500">{subtitle}</p>
-          )}
-        </div>
+          <MenuIcon style={{ width: "24px", height: "24px" }} />
+        </button>
+        <Link href="/profile" className="flex items-center">
+          <Image
+            src="/images/tuv-nord-logo.png"
+            alt="TÜV NORD"
+            width={140}
+            height={40}
+            priority
+            style={{ objectPosition: "left center", cursor: "pointer" }}
+          />
+        </Link>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search..."
-            className="h-9 w-60 pl-9 text-sm border-gray-200 bg-gray-50 focus:bg-white"
-          />
-        </div>
+      {/* Right side — divider + user */}
+      <div className="flex items-center" style={{ gap: "16px" }}>
+        {/* Divider — gray-300, 1.3px, 56px */}
+        <div
+          style={{
+            width: "1.3px",
+            height: "56px",
+            backgroundColor: "var(--hsd-ui-color-gray-300)",
+          }}
+        />
 
-        {/* Notifications */}
+        {/* User Section — avatar + name + dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9">
-              <Bell className="h-5 w-5 text-gray-500" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-accent" />
-            </Button>
+            <button className="flex cursor-pointer items-center border-0 bg-transparent outline-none" style={{ gap: "8px" }}>
+              {/* Avatar — blue-200 bg, 40px */}
+              <div
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  backgroundColor: "var(--hsd-ui-color-blue-200)",
+                }}
+              >
+                <span
+                  style={{
+                    color: "rgba(35, 41, 51, 1)",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    fontFamily: "Poppins, sans-serif",
+                  }}
+                >
+                  {getUserInitials()}
+                </span>
+              </div>
+              {/* Name + Email */}
+              <div className="hidden md:flex md:flex-col md:items-start">
+                <span
+                  style={{
+                    fontSize: "1rem",
+                    fontWeight: 400,
+                    color: "rgba(35, 41, 51, 1)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {user?.name || "User"}
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.875rem",
+                    fontWeight: 300,
+                    color: "rgba(147, 158, 153, 1)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {user?.email || ""}
+                </span>
+              </div>
+              {/* Chevron */}
+              <ChevronDown
+                className="hidden md:block"
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  color: "rgba(120, 134, 127, 1)",
+                }}
+              />
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
-              <span className="font-medium text-sm">New application received</span>
-              <span className="text-xs text-gray-500">John Doe applied for Senior Developer</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
-              <span className="font-medium text-sm">Interview scheduled</span>
-              <span className="text-xs text-gray-500">Tomorrow at 2:00 PM</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center text-sm text-gray-500">
-              View all
+          <DropdownMenuContent align="end" sideOffset={8} className="min-w-[160px]">
+            <DropdownMenuItem
+              onClick={() => setShowLogoutDialog(true)}
+              className="cursor-pointer"
+            >
+              <LogOut
+                className="mr-2"
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  color: "var(--hsd-ui-color-red-600)",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: "var(--hsd-ui-color-red-600)",
+                }}
+              >
+                Logout
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* TUV-Nord Logo & Logout */}
-        <div className="flex items-center gap-3 pl-2 border-l border-gray-200">
-          <Image
-            src="/images/tuv-nord-logo.png"
-            alt="TUV Nord"
-            width={100}
-            height={32}
-            className="h-8 w-auto object-contain"
-          />
-
-          {/* Logout Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowLogoutDialog(true)}
-            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
-            title="Logout"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Logout Dialog */}
+        {/* Logout Confirmation Dialog */}
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent className="sm:max-w-[380px]">
+          <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
-              <DialogTitle>Sign out</DialogTitle>
+              <DialogTitle>Confirmation Logout</DialogTitle>
               <DialogDescription>
-                Are you sure you want to sign out?
+                Are you sure you want to end the session and exit the page?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2">
@@ -145,11 +197,14 @@ export function Header({ title, subtitle }: HeaderProps) {
                 Cancel
               </Button>
               <Button
-                variant="destructive"
                 onClick={handleSignOut}
                 disabled={isLoading}
+                style={{
+                  backgroundColor: "var(--hsd-ui-color-navy-500)",
+                  borderColor: "var(--hsd-ui-color-navy-500)",
+                }}
               >
-                {isLoading ? "Signing out..." : "Sign out"}
+                {isLoading ? "Logging out..." : "Yes, Sure"}
               </Button>
             </DialogFooter>
           </DialogContent>
