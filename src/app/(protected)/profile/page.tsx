@@ -1762,7 +1762,7 @@ export default function CandidateProfilePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setEduDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setEduDialogOpen(false)} style={{ borderRadius: "4px", border: "1px solid rgba(120, 134, 127, 0.3)" }}>Cancel</Button>
             <Button type="button" onClick={saveEducation} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{eduEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -1797,7 +1797,7 @@ export default function CandidateProfilePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setWorkDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setWorkDialogOpen(false)} style={{ borderRadius: "4px", border: "1px solid rgba(120, 134, 127, 0.3)" }}>Cancel</Button>
             <Button type="button" onClick={saveWork} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{workEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -1832,7 +1832,7 @@ export default function CandidateProfilePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setFamilyDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setFamilyDialogOpen(false)} style={{ borderRadius: "4px", border: "1px solid rgba(120, 134, 127, 0.3)" }}>Cancel</Button>
             <Button type="button" onClick={saveFamily} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{familyEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -1867,7 +1867,7 @@ export default function CandidateProfilePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setTrainingDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setTrainingDialogOpen(false)} style={{ borderRadius: "4px", border: "1px solid rgba(120, 134, 127, 0.3)" }}>Cancel</Button>
             <Button type="button" onClick={saveTraining} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{trainingEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
