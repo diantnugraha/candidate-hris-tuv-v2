@@ -36,6 +36,7 @@ import {
   Download,
   ScrollText,
   LogOut,
+  ChevronDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
@@ -599,92 +606,115 @@ export default function CandidateProfilePage() {
             }}
           />
 
-          {/* User Section — avatar + name + logout */}
-          <div className="flex items-center" style={{ gap: "8px" }}>
-            {/* Avatar */}
-            <div
-              className="flex items-center justify-center shrink-0"
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                backgroundColor: "var(--hsd-ui-color-blue-200)",
-              }}
-            >
-              <span
-                style={{
-                  color: "rgba(35, 41, 51, 1)",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  fontFamily: "Poppins, sans-serif",
-                }}
-              >
-                {user?.name ? getInitials(user.name) : "?"}
-              </span>
-            </div>
-            {/* Name + Email */}
-            <div className="hidden flex-col sm:flex">
-              <span
-                style={{
-                  fontSize: "1rem",
-                  fontWeight: 400,
-                  color: "rgba(35, 41, 51, 1)",
-                  lineHeight: 1.4,
-                }}
-              >
-                {user?.name || "-"}
-              </span>
-              <span
-                style={{
-                  fontSize: "0.875rem",
-                  fontWeight: 300,
-                  color: "rgba(147, 158, 153, 1)",
-                  lineHeight: 1.4,
-                }}
-              >
-                {user?.email || ""}
-              </span>
-            </div>
-            {/* Logout */}
-            <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-              <AlertDialogTrigger asChild>
-                <button
-                  className="flex items-center justify-center cursor-pointer bg-transparent border-0 outline-none"
-                  title="Logout"
-                  style={{ marginLeft: "8px" }}
+          {/* User Section — avatar + name + dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex cursor-pointer items-center border-0 bg-transparent outline-none" style={{ gap: "8px" }}>
+                {/* Avatar */}
+                <div
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    backgroundColor: "var(--hsd-ui-color-blue-200)",
+                  }}
                 >
-                  <LogOut
+                  <span
                     style={{
-                      width: "20px",
-                      height: "20px",
-                      color: "rgba(120, 134, 127, 1)",
-                    }}
-                  />
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmation Logout</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to end the session and exit the page?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isLoggingOut}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    style={{
-                      backgroundColor: "var(--hsd-ui-color-navy-500)",
-                      borderColor: "var(--hsd-ui-color-navy-500)",
+                      color: "rgba(35, 41, 51, 1)",
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      fontFamily: "Poppins, sans-serif",
                     }}
                   >
-                    {isLoggingOut ? "Logging out..." : "Yes, Sure"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                    {user?.name ? getInitials(user.name) : "?"}
+                  </span>
+                </div>
+                {/* Name + Email */}
+                <div className="hidden md:flex md:flex-col md:items-start">
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 400,
+                      color: "rgba(35, 41, 51, 1)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {user?.name || "-"}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.875rem",
+                      fontWeight: 300,
+                      color: "rgba(147, 158, 153, 1)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {user?.email || ""}
+                  </span>
+                </div>
+                {/* Chevron */}
+                <ChevronDown
+                  className="hidden md:block"
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    color: "rgba(120, 134, 127, 1)",
+                  }}
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="min-w-[160px]">
+              <DropdownMenuItem
+                onClick={() => setShowLogoutDialog(true)}
+                className="cursor-pointer"
+              >
+                <LogOut
+                  className="mr-2"
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    color: "var(--hsd-ui-color-red-600)",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    color: "var(--hsd-ui-color-red-600)",
+                  }}
+                >
+                  Logout
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Logout Confirmation Dialog */}
+          <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmation Logout</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to end the session and exit the page?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isLoggingOut}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  style={{
+                    backgroundColor: "var(--hsd-ui-color-navy-500)",
+                    borderColor: "var(--hsd-ui-color-navy-500)",
+                  }}
+                >
+                  {isLoggingOut ? "Logging out..." : "Yes, Sure"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 
