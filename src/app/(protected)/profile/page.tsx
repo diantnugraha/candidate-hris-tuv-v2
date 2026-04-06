@@ -844,10 +844,10 @@ export default function CandidateProfilePage() {
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
-                          <Button variant="destructive" onClick={() => window.history.back()} className="h-10">
+                          <Button variant="outline" onClick={() => window.history.back()} className="h-10" style={{ borderRadius: "4px", borderColor: "var(--hsd-ui-color-red-500)", color: "var(--hsd-ui-color-red-600)" }}>
                             Tidak Setuju
                           </Button>
-                          <Button onClick={handleConsent} disabled={!consentChecked || isAcceptingAgreement} className="h-10">
+                          <Button onClick={handleConsent} disabled={!consentChecked || isAcceptingAgreement} className="h-10" style={{ backgroundColor: "var(--hsd-ui-color-navy-500)", borderRadius: "4px" }}>
                             {isAcceptingAgreement ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
