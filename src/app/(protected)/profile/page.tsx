@@ -1878,9 +1878,16 @@ export default function CandidateProfilePage() {
 function InfoBanner({ submitted }: { submitted?: boolean }) {
   if (submitted) {
     return (
-      <div className="mb-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-        <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
-        <p className="text-sm text-emerald-700 leading-relaxed font-medium">
+      <div
+        className="mb-4 flex items-center gap-3 px-4 py-3"
+        style={{
+          borderRadius: "4px",
+          border: "1px solid var(--hsd-ui-color-green-200)",
+          backgroundColor: "var(--hsd-ui-color-green-50)",
+        }}
+      >
+        <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: "var(--hsd-ui-color-green-600)" }} />
+        <p className="text-sm leading-relaxed font-medium" style={{ color: "var(--hsd-ui-color-green-700)" }}>
           Your profile has been submitted and is under review. You can view your data but changes are no longer allowed.
         </p>
       </div>
