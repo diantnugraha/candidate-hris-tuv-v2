@@ -905,7 +905,7 @@ export default function CandidateProfilePage() {
                       <Input type="email" placeholder="your.email@example.com" value={formData.personalEmail} readOnly className="bg-muted/50" />
                     </FormField>
                     <FormField label="Driving License">
-                      <Select value={formData.drivingLicense} onValueChange={(value) => handleInputChange("drivingLicense", value)}>
+                      <Select value={formData.drivingLicense} onValueChange={(value) => handleInputChange("drivingLicense", value)} disabled={isSubmitted}>
                         <SelectTrigger><SelectValue placeholder="Select license type" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
@@ -924,7 +924,7 @@ export default function CandidateProfilePage() {
                       <Textarea placeholder="Current residential address" value={formData.domicileAddress} onChange={(e) => handleInputChange("domicileAddress", e.target.value)} required rows={3} />
                     </FormField>
                     <FormField label="Residential Status" required>
-                      <Select value={formData.residentialStatus} onValueChange={(value) => handleInputChange("residentialStatus", value)}>
+                      <Select value={formData.residentialStatus} onValueChange={(value) => handleInputChange("residentialStatus", value)} disabled={isSubmitted}>
                         <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="own">Own House</SelectItem>
@@ -942,7 +942,7 @@ export default function CandidateProfilePage() {
                       <Input placeholder="City of birth" value={formData.birthPlace} onChange={(e) => handleInputChange("birthPlace", e.target.value)} required />
                     </FormField>
                     <FormField label="Marital Status">
-                      <Select value={formData.maritalStatus} onValueChange={(value) => handleInputChange("maritalStatus", value)}>
+                      <Select value={formData.maritalStatus} onValueChange={(value) => handleInputChange("maritalStatus", value)} disabled={isSubmitted}>
                         <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="single">Single</SelectItem>
