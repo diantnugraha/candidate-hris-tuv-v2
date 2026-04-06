@@ -1665,7 +1665,7 @@ export default function CandidateProfilePage() {
                     }).map((step) => {
                       const locked = !isStepAccessible(step.id);
                       return (
-                        <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6 bg-accent" : (completedSteps.has(step.id) && isSectionComplete(step.id)) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} />
+                        <button key={step.id} type="button" onClick={() => goToStep(step.id)} disabled={locked} className={cn("h-2 rounded-full transition-all duration-300", currentStep === step.id ? "w-6" : (completedSteps.has(step.id) && isSectionComplete(step.id)) ? "w-2 bg-emerald-400" : locked ? "w-2 bg-border/40" : "w-2 bg-border")} style={currentStep === step.id ? { backgroundColor: "#001ed2" } : undefined} />
                       );
                     })}
                   </div>
