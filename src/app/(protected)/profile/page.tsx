@@ -999,7 +999,6 @@ export default function CandidateProfilePage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-10 text-center">#</TableHead>
                             <TableHead>School / University</TableHead>
                             <TableHead>City</TableHead>
                             <TableHead>Degree</TableHead>
@@ -1011,7 +1010,6 @@ export default function CandidateProfilePage() {
                         <TableBody>
                           {educationalBackground.map((edu, index) => (
                             <TableRow key={edu.id} className="group">
-                              <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
                               <TableCell className="font-medium">{edu.schoolUniversity || "-"}</TableCell>
                               <TableCell>{edu.city || "-"}</TableCell>
                               <TableCell>{edu.degree || "-"}</TableCell>
