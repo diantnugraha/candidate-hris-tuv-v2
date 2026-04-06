@@ -1049,7 +1049,6 @@ export default function CandidateProfilePage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-10 text-center">#</TableHead>
                             <TableHead>Company</TableHead>
                             <TableHead>City</TableHead>
                             <TableHead>Job Title</TableHead>
@@ -1061,7 +1060,7 @@ export default function CandidateProfilePage() {
                         <TableBody>
                           {workExperience.map((work, index) => (
                             <TableRow key={work.id} className="group">
-                              <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
+
                               <TableCell className="font-medium">{work.company || "-"}</TableCell>
                               <TableCell>{work.city || "-"}</TableCell>
                               <TableCell>{work.jobTitle || "-"}</TableCell>
@@ -1101,7 +1100,6 @@ export default function CandidateProfilePage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-10 text-center">#</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Relation</TableHead>
                             <TableHead className="w-20">Age</TableHead>
@@ -1113,7 +1111,7 @@ export default function CandidateProfilePage() {
                         <TableBody>
                           {familyMembers.map((member, index) => (
                             <TableRow key={member.id} className="group">
-                              <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
+
                               <TableCell className="font-medium">{member.name || "-"}</TableCell>
                               <TableCell>{member.relation || "-"}</TableCell>
                               <TableCell>{member.age || "-"}</TableCell>
@@ -1153,7 +1151,6 @@ export default function CandidateProfilePage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-10 text-center">#</TableHead>
                             <TableHead>Course Topic</TableHead>
                             <TableHead>Provider</TableHead>
                             <TableHead className="w-24">Year</TableHead>
@@ -1165,7 +1162,7 @@ export default function CandidateProfilePage() {
                         <TableBody>
                           {courseTraining.map((course, index) => (
                             <TableRow key={course.id} className="group">
-                              <TableCell className="text-center text-muted-foreground font-medium">{index + 1}</TableCell>
+
                               <TableCell className="font-medium">{course.courseTopic || "-"}</TableCell>
                               <TableCell>{course.provider || "-"}</TableCell>
                               <TableCell>{course.year}</TableCell>
