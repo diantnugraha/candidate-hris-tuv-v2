@@ -177,6 +177,7 @@ export default function CandidateProfilePage() {
     }
   }, [user?.agreementAcceptedAt]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showSubmitSuccessDialog, setShowSubmitSuccessDialog] = React.useState(false);
   const [isAccepted, setIsAccepted] = React.useState(false);
   const [isAccepting, setIsAccepting] = React.useState(false);
   const [completedSteps, setCompletedSteps] = React.useState<Set<number>>(new Set());
@@ -420,7 +421,6 @@ export default function CandidateProfilePage() {
       const result = await submitApplication();
 
       if (result.success) {
-        toast.success("Application submitted successfully");
         updateUser({ name: formData.fullName });
         // isSubmitted is now managed by the hook - UI syncs via useEffect
         setCompletedSteps((prev) => {
@@ -428,8 +428,7 @@ export default function CandidateProfilePage() {
           Array.from({ length: 7 }, (_, i) => i).forEach((i) => next.add(i));
           return next;
         });
-        setCurrentStep(7);
-        formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        setShowSubmitSuccessDialog(true);
       } else {
         // Show errors for failed sections
         result.errors.forEach((error) => toast.error(error));
@@ -568,58 +567,123 @@ export default function CandidateProfilePage() {
   return (
     <>
     <div className="min-h-screen bg-[hsl(220,20%,97%)]">
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/images/tuv-nord-logo.png"
-              alt="TUV Nord"
-              width={120}
-              height={40}
-              className="h-10 w-auto object-contain"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/70 shadow-sm">
-                <span className="text-[11px] font-semibold text-white">{user?.name ? getInitials(user.name) : "?"}</span>
-              </div>
-              <div className="hidden flex-col sm:flex">
-                <span className="text-sm font-medium text-muted-foreground">{user?.name || "-"}</span>
-                <span className="text-xs text-muted-foreground/70">{user?.email || ""}</span>
-              </div>
-              <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                    title="Logout"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Sign out</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to sign out from your account?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoggingOut}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isLoggingOut ? "Signing out..." : "Sign out"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+      {/* Top Header Bar — TUV design */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between bg-white"
+        style={{
+          height: "75px",
+          padding: "0 24px",
+          borderBottom: "1px solid #d0d6dd",
+        }}
+      >
+        {/* Left side — logo */}
+        <div className="flex items-center" style={{ gap: "16px" }}>
+          <Image
+            src="/images/tuv-nord-logo.png"
+            alt="TÜV NORD"
+            width={140}
+            height={40}
+            priority
+            style={{ objectPosition: "left center" }}
+          />
+        </div>
+
+        {/* Right side — divider + user */}
+        <div className="flex items-center" style={{ gap: "16px" }}>
+          {/* Divider */}
+          <div
+            style={{
+              width: "1.3px",
+              height: "56px",
+              backgroundColor: "var(--hsd-ui-color-gray-300)",
+            }}
+          />
+
+          {/* User Section — avatar + name + logout */}
+          <div className="flex items-center" style={{ gap: "8px" }}>
+            {/* Avatar */}
+            <div
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                backgroundColor: "var(--hsd-ui-color-blue-200)",
+              }}
+            >
+              <span
+                style={{
+                  color: "rgba(35, 41, 51, 1)",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  fontFamily: "Poppins, sans-serif",
+                }}
+              >
+                {user?.name ? getInitials(user.name) : "?"}
+              </span>
             </div>
+            {/* Name + Email */}
+            <div className="hidden flex-col sm:flex">
+              <span
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 400,
+                  color: "rgba(35, 41, 51, 1)",
+                  lineHeight: 1.4,
+                }}
+              >
+                {user?.name || "-"}
+              </span>
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 300,
+                  color: "rgba(147, 158, 153, 1)",
+                  lineHeight: 1.4,
+                }}
+              >
+                {user?.email || ""}
+              </span>
+            </div>
+            {/* Logout */}
+            <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+              <AlertDialogTrigger asChild>
+                <button
+                  className="flex items-center justify-center cursor-pointer bg-transparent border-0 outline-none"
+                  title="Logout"
+                  style={{ marginLeft: "8px" }}
+                >
+                  <LogOut
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      color: "rgba(120, 134, 127, 1)",
+                    }}
+                  />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmation Logout</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to end the session and exit the page?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isLoggingOut}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    style={{
+                      backgroundColor: "var(--hsd-ui-color-navy-500)",
+                      borderColor: "var(--hsd-ui-color-navy-500)",
+                    }}
+                  >
+                    {isLoggingOut ? "Logging out..." : "Yes, Sure"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </header>
@@ -1100,7 +1164,7 @@ export default function CandidateProfilePage() {
               </div>
 
               {/* Step 6: Assessment */}
-              <div className={cn("transition-all duration-300", currentStep === 6 ? "animate-fade-in" : "hidden")}>
+              <div className={cn("transition-all duration-300 space-y-6", currentStep === 6 ? "animate-fade-in" : "hidden")}>
                 <InfoBanner submitted={isSubmitted} />
                 <SectionCard title="Job Vacancy" subtitle="Position you are applying for">
                   <div className="rounded-lg bg-accent/5 border border-accent/20 px-4 py-3">
@@ -1108,8 +1172,7 @@ export default function CandidateProfilePage() {
                   </div>
                 </SectionCard>
 
-                <div className="mt-6">
-                  <SectionCard title="Self Assessment" subtitle="Tell us about yourself and your expectations">
+                <SectionCard title="Self Assessment" subtitle="Tell us about yourself and your expectations">
                     <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
                       <FormField label="What caused you to leave your last job?">
                         <Textarea placeholder="Describe your reason..." value={assessmentData.reasonLeavingLastJob} onChange={(e) => handleAssessmentChange("reasonLeavingLastJob", e.target.value)} rows={3} />
@@ -1155,7 +1218,6 @@ export default function CandidateProfilePage() {
                       </FormField>
                     </div>
                   </SectionCard>
-                </div>
               </div>
 
               </fieldset>
@@ -1364,7 +1426,7 @@ export default function CandidateProfilePage() {
               </div>
 
               {/* Step 9: Onboarding - View Only */}
-              <div className={cn("transition-all duration-300", currentStep === 9 ? "animate-fade-in" : "hidden")}>
+              <div className={cn("transition-all duration-300 space-y-6", currentStep === 9 ? "animate-fade-in" : "hidden")}>
                 {onboardingData && <><SectionCard title="Onboarding Details" subtitle="Your onboarding information as assigned by HR">
                   <div className="space-y-6">
                     {/* Onboarding Status Banner */}
@@ -1386,54 +1448,51 @@ export default function CandidateProfilePage() {
                 </SectionCard>
 
                 {/* Facilities Table */}
-                <div className="mt-6">
-                  <SectionCard title="Facilities" subtitle="Equipment and facilities assigned to you">
-                    {onboardingData.facilities.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
-                          <Package className="h-6 w-6 text-muted-foreground/60" />
-                        </div>
-                        <h3 className="mt-4 text-sm font-semibold text-foreground">No facilities assigned yet</h3>
-                        <p className="mt-1 max-w-sm text-sm text-muted-foreground">Facilities will be listed here once assigned by the HR team.</p>
+                <SectionCard title="Facilities" subtitle="Equipment and facilities assigned to you">
+                  {onboardingData.facilities.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
+                        <Package className="h-6 w-6 text-muted-foreground/60" />
                       </div>
-                    ) : (
-                      <div className="overflow-x-auto -mx-6 px-6">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-10 text-center">#</TableHead>
-                              <TableHead>Items</TableHead>
-                              <TableHead className="w-20">Qty</TableHead>
-                              <TableHead className="w-20">Unit</TableHead>
-                              <TableHead>Inventory No</TableHead>
-                              <TableHead>Condition</TableHead>
-                              <TableHead>Status</TableHead>
+                      <h3 className="mt-4 text-sm font-semibold text-foreground">No facilities assigned yet</h3>
+                      <p className="mt-1 max-w-sm text-sm text-muted-foreground">Facilities will be listed here once assigned by the HR team.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto -mx-6 px-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-10 text-center">#</TableHead>
+                            <TableHead>Items</TableHead>
+                            <TableHead className="w-20">Qty</TableHead>
+                            <TableHead className="w-20">Unit</TableHead>
+                            <TableHead>Inventory No</TableHead>
+                            <TableHead>Condition</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {onboardingData.facilities.map((facility) => (
+                            <TableRow key={facility.id}>
+                              <TableCell className="text-center text-muted-foreground font-medium">{facility.id}</TableCell>
+                              <TableCell className="font-medium">{facility.item}</TableCell>
+                              <TableCell>{facility.qty}</TableCell>
+                              <TableCell>{facility.unit}</TableCell>
+                              <TableCell>{facility.inventoryNo}</TableCell>
+                              <TableCell>{facility.condition}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="capitalize">{facility.status}</Badge>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {onboardingData.facilities.map((facility) => (
-                              <TableRow key={facility.id}>
-                                <TableCell className="text-center text-muted-foreground font-medium">{facility.id}</TableCell>
-                                <TableCell className="font-medium">{facility.item}</TableCell>
-                                <TableCell>{facility.qty}</TableCell>
-                                <TableCell>{facility.unit}</TableCell>
-                                <TableCell>{facility.inventoryNo}</TableCell>
-                                <TableCell>{facility.condition}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="capitalize">{facility.status}</Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </SectionCard>
-                </div>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </SectionCard>
 
                 {/* Onboarding Program Table */}
-                <div className="mt-6">
-                  <SectionCard title="Onboarding Program" subtitle="Scheduled onboarding activities and training">
+                <SectionCard title="Onboarding Program" subtitle="Scheduled onboarding activities and training">
                     {onboardingData.programs.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 text-center">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
@@ -1473,9 +1532,8 @@ export default function CandidateProfilePage() {
                       </div>
                     )}
                   </SectionCard>
-                </div>
 
-                <div className="mt-6 rounded-lg border border-dashed border-border/80 bg-white px-4 py-3">
+                <div className="rounded-lg border border-dashed border-border/80 bg-white px-4 py-3">
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     All onboarding information is managed by the HR team. Once all details are confirmed, you will receive further instructions.
                   </p>
@@ -1483,50 +1541,46 @@ export default function CandidateProfilePage() {
 
                 {/* Confirm & Accept Offer */}
                 {!isAccepted && (
-                  <div className="mt-6">
-                    <div className="rounded-xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 text-center">
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
-                        <HandshakeIcon className="h-7 w-7 text-accent" />
-                      </div>
-                      <h3 className="mt-4 text-lg font-semibold text-foreground">Ready to Join?</h3>
-                      <p className="mt-2 mx-auto max-w-md text-sm text-muted-foreground leading-relaxed">
-                        Please review all your onboarding details above. By confirming, you accept the offer and agree to the terms of your employment.
-                      </p>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button className="mt-5 gap-2 px-8" size="lg" disabled={isAccepting}>
-                            {isAccepting ? (<><Loader2 className="h-5 w-5 animate-spin" />Accepting...</>) : (<><CheckCircle2 className="h-5 w-5" />Confirm & Accept Offer</>)}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirm & Accept Offer</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              By confirming, you accept the job offer and agree to the onboarding details provided. This action cannot be undone. Are you sure you want to proceed?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isAccepting}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleAcceptOffer} disabled={isAccepting}>
-                              Yes, I Accept
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                  <div className="rounded-xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+                      <HandshakeIcon className="h-7 w-7 text-accent" />
                     </div>
+                    <h3 className="mt-4 text-lg font-semibold text-foreground">Ready to Join?</h3>
+                    <p className="mt-2 mx-auto max-w-md text-sm text-muted-foreground leading-relaxed">
+                      Please review all your onboarding details above. By confirming, you accept the offer and agree to the terms of your employment.
+                    </p>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="mt-5 gap-2 px-8" size="lg" disabled={isAccepting}>
+                          {isAccepting ? (<><Loader2 className="h-5 w-5 animate-spin" />Accepting...</>) : (<><CheckCircle2 className="h-5 w-5" />Confirm & Accept Offer</>)}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirm & Accept Offer</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            By confirming, you accept the job offer and agree to the onboarding details provided. This action cannot be undone. Are you sure you want to proceed?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isAccepting}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleAcceptOffer} disabled={isAccepting}>
+                            Yes, I Accept
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
 
                 {isAccepted && (
-                  <div className="mt-6">
-                    <div className="flex items-center gap-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-6 py-5">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                        <CheckCircle2 className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold text-emerald-800">Offer Accepted</p>
-                        <p className="mt-0.5 text-sm text-emerald-600">You have successfully confirmed and accepted your offer. Welcome aboard!</p>
-                      </div>
+                  <div className="flex items-center gap-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-6 py-5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                      <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-emerald-800">Offer Accepted</p>
+                      <p className="mt-0.5 text-sm text-emerald-600">You have successfully confirmed and accepted your offer. Welcome aboard!</p>
                     </div>
                   </div>
                 )}
@@ -1598,6 +1652,40 @@ export default function CandidateProfilePage() {
       </div>
 
       {/* ========== DIALOGS ========== */}
+
+      {/* Submission Success Dialog */}
+      <Dialog open={showSubmitSuccessDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowSubmitSuccessDialog(false);
+          setCurrentStep(7);
+          formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }}>
+        <DialogContent className="sm:max-w-md text-center" onPointerDownOutside={(e) => e.preventDefault()}>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            </div>
+            <DialogHeader className="space-y-2 text-center">
+              <DialogTitle className="text-xl">Thank You for Your Submission!</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+                We have successfully received your application. Our recruitment team will review your information and further details regarding the next steps will be communicated to you shortly.
+              </DialogDescription>
+            </DialogHeader>
+            <Button
+              onClick={() => {
+                setShowSubmitSuccessDialog(false);
+                setCurrentStep(7);
+                formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="mt-2 gap-1.5"
+            >
+              Continue
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Education Dialog */}
       <Dialog open={eduDialogOpen} onOpenChange={setEduDialogOpen}>
