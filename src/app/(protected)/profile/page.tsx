@@ -990,7 +990,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Educational Background"
                   subtitle="Add your academic qualifications from most recent"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddEducation} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddEducation} className="gap-1.5 text-sm" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff", height: "38px", padding: "0 16px" }}><Plus className="h-4 w-4" />Add Entry</Button> : undefined}
                 >
                   {educationalBackground.length === 0 ? (
                     <EmptyState icon={GraduationCap} title="No education entries yet" description="Add your educational background starting from the most recent qualification." actionLabel="Add Education" onAction={openAddEducation} />
@@ -1042,7 +1042,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Work Experience"
                   subtitle="List your professional experience from most recent"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddWork} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddWork} className="gap-1.5 text-sm" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff", height: "38px", padding: "0 16px" }}><Plus className="h-4 w-4" />Add Entry</Button> : undefined}
                 >
                   {workExperience.length === 0 ? (
                     <EmptyState icon={Briefcase} title="No work experience added" description="Add your work experience starting from the most recent position." actionLabel="Add Experience" onAction={openAddWork} />
@@ -1094,7 +1094,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Family Members"
                   subtitle="List your immediate family members"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddFamily} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddFamily} className="gap-1.5 text-sm" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff", height: "38px", padding: "0 16px" }}><Plus className="h-4 w-4" />Add Entry</Button> : undefined}
                 >
                   {familyMembers.length === 0 ? (
                     <EmptyState icon={Users} title="No family members listed" description="Add your immediate family members including parents, spouse, and children." actionLabel="Add Family Member" onAction={openAddFamily} />
@@ -1146,7 +1146,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Course / Training Experience"
                   subtitle="List relevant courses, training, and certifications"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddTraining} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddTraining} className="gap-1.5 text-sm" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff", height: "38px", padding: "0 16px" }}><Plus className="h-4 w-4" />Add Entry</Button> : undefined}
                 >
                   {courseTraining.length === 0 ? (
                     <EmptyState icon={Award} title="No training entries yet" description="Add any courses, workshops, or certifications you have completed." actionLabel="Add Training" onAction={openAddTraining} />
