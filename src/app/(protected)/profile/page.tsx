@@ -1898,8 +1898,15 @@ function InfoBanner({ submitted }: { submitted?: boolean }) {
     );
   }
   return (
-    <div className="mb-4 rounded-lg border border-accent/20 bg-accent/5 px-4 py-3">
-      <p className="text-sm text-muted-foreground leading-relaxed">
+    <div
+      className="mb-4 px-4 py-3"
+      style={{
+        borderRadius: "4px",
+        border: "1px solid var(--hsd-ui-color-navy-200)",
+        backgroundColor: "var(--hsd-ui-color-navy-50)",
+      }}
+    >
+      <p className="text-sm leading-relaxed" style={{ color: "var(--hsd-ui-color-navy-500)" }}>
         Please fill in all required information carefully. Your data will be verified by our HR team.
       </p>
     </div>
