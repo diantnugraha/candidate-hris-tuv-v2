@@ -990,7 +990,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Educational Background"
                   subtitle="Add your academic qualifications from most recent"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddEducation} size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddEducation} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
                 >
                   {educationalBackground.length === 0 ? (
                     <EmptyState icon={GraduationCap} title="No education entries yet" description="Add your educational background starting from the most recent qualification." actionLabel="Add Education" onAction={openAddEducation} />
@@ -1042,7 +1042,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Work Experience"
                   subtitle="List your professional experience from most recent"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddWork} size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddWork} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
                 >
                   {workExperience.length === 0 ? (
                     <EmptyState icon={Briefcase} title="No work experience added" description="Add your work experience starting from the most recent position." actionLabel="Add Experience" onAction={openAddWork} />
@@ -1094,7 +1094,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Family Members"
                   subtitle="List your immediate family members"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddFamily} size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddFamily} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
                 >
                   {familyMembers.length === 0 ? (
                     <EmptyState icon={Users} title="No family members listed" description="Add your immediate family members including parents, spouse, and children." actionLabel="Add Family Member" onAction={openAddFamily} />
@@ -1146,7 +1146,7 @@ export default function CandidateProfilePage() {
                 <SectionCard
                   title="Course / Training Experience"
                   subtitle="List relevant courses, training, and certifications"
-                  action={!isSubmitted ? <Button type="button" onClick={openAddTraining} size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
+                  action={!isSubmitted ? <Button type="button" onClick={openAddTraining} size="sm" className="gap-1.5" style={{ backgroundColor: "#001ed2", borderRadius: "4px", color: "#fff" }}><Plus className="h-3.5 w-3.5" />Add Entry</Button> : undefined}
                 >
                   {courseTraining.length === 0 ? (
                     <EmptyState icon={Award} title="No training entries yet" description="Add any courses, workshops, or certifications you have completed." actionLabel="Add Training" onAction={openAddTraining} />
@@ -1620,7 +1620,7 @@ export default function CandidateProfilePage() {
               <div className="mt-6 space-y-3">
                 {/* Unsaved Changes Indicator */}
                 {hasUnsavedChanges && !isSubmitted && currentStep >= 1 && currentStep <= 6 && (
-                  <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
+                  <div className="flex items-center justify-between bg-amber-50 px-4 py-2.5" style={{ borderRadius: "4px", border: "1px solid var(--hsd-ui-color-orange-200, #fbd38d)" }}>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                       <span className="text-sm text-amber-700">You have unsaved changes</span>
@@ -1763,7 +1763,7 @@ export default function CandidateProfilePage() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setEduDialogOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={saveEducation}>{eduEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
+            <Button type="button" onClick={saveEducation} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{eduEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1798,7 +1798,7 @@ export default function CandidateProfilePage() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setWorkDialogOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={saveWork}>{workEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
+            <Button type="button" onClick={saveWork} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{workEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1833,7 +1833,7 @@ export default function CandidateProfilePage() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setFamilyDialogOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={saveFamily}>{familyEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
+            <Button type="button" onClick={saveFamily} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{familyEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1868,7 +1868,7 @@ export default function CandidateProfilePage() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setTrainingDialogOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={saveTraining}>{trainingEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
+            <Button type="button" onClick={saveTraining} style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}>{trainingEditIndex !== null ? "Save Changes" : "Add Entry"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1972,7 +1972,7 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: E
       </div>
       <h3 className="mt-4 text-sm font-semibold text-foreground">{title}</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
-      <Button type="button" onClick={onAction} size="sm" variant="outline" className="mt-4 gap-1.5">
+      <Button type="button" onClick={onAction} size="sm" variant="outline" className="mt-4 gap-1.5" style={{ borderRadius: "4px" }}>
         <Plus className="h-3.5 w-3.5" />
         {actionLabel}
       </Button>
@@ -1993,7 +1993,7 @@ function ReadOnlyField({ label, value, icon: Icon }: ReadOnlyFieldProps) {
         <Icon className="h-3.5 w-3.5" />
         {label}
       </Label>
-      <div className="flex h-11 items-center rounded-lg border border-border/60 bg-muted/30 px-3">
+      <div className="flex h-11 items-center bg-muted/30 px-3" style={{ borderRadius: "4px", border: "1px solid rgba(120, 134, 127, 0.2)" }}>
         <span className={cn("text-sm", value ? "text-foreground font-medium" : "text-muted-foreground/60 italic")}>
           {value || "Not yet assigned"}
         </span>
