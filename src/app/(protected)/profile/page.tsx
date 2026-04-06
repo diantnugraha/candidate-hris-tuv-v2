@@ -1710,6 +1710,7 @@ export default function CandidateProfilePage() {
                 formRef.current?.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className="mt-2 gap-1.5"
+              style={{ backgroundColor: "#001ed2", borderRadius: "4px" }}
             >
               Continue
               <ChevronRight className="h-4 w-4" />
