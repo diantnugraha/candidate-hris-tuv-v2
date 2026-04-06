@@ -835,7 +835,11 @@ export default function CandidateProfilePage() {
                               type="checkbox"
                               checked={consentChecked}
                               onChange={(e) => setConsentChecked(e.target.checked)}
-                              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent focus:ring-accent"
+                              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer"
+                              style={{
+                                borderRadius: "4px",
+                                accentColor: "#001ed2",
+                              }}
                             />
                             <span className="text-sm leading-relaxed text-foreground/90">
                               Dengan ini, saya menyatakan memberikan persetujuan atas pengumpulan dan pemrosesan data pribadi saya sesuai dengan syarat dan ketentuan yang telah ditetapkan.
