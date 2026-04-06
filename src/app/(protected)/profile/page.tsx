@@ -767,9 +767,9 @@ export default function CandidateProfilePage() {
                       isLocked ? "cursor-not-allowed opacity-50" : isActive ? "bg-white" : "hover:bg-white/60"
                     )}
                     style={isActive && !isLocked ? {
-                      borderRadius: "4px",
+                      borderRadius: "8px",
                       border: "1px solid rgba(120, 134, 127, 0.2)",
-                    } : { borderRadius: "4px" }}
+                    } : { borderRadius: "8px" }}
                   >
                     <div className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center transition-all duration-200",
@@ -1618,7 +1618,7 @@ export default function CandidateProfilePage() {
               <div className="mt-6 space-y-3">
                 {/* Unsaved Changes Indicator */}
                 {hasUnsavedChanges && !isSubmitted && currentStep >= 1 && currentStep <= 6 && (
-                  <div className="flex items-center justify-between bg-amber-50 px-4 py-2.5" style={{ borderRadius: "4px", border: "1px solid var(--hsd-ui-color-orange-200, #fbd38d)" }}>
+                  <div className="flex items-center justify-between bg-amber-50 px-4 py-2.5" style={{ borderRadius: "8px", border: "1px solid var(--hsd-ui-color-orange-200, #fbd38d)" }}>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                       <span className="text-sm text-amber-700">You have unsaved changes</span>
@@ -1647,7 +1647,7 @@ export default function CandidateProfilePage() {
                 <div
                   className="flex items-center justify-between bg-white p-4"
                   style={{
-                    borderRadius: "4px",
+                    borderRadius: "8px",
                     border: "1px solid rgba(120, 134, 127, 0.2)",
                   }}
                 >
@@ -1883,7 +1883,7 @@ function InfoBanner({ submitted }: { submitted?: boolean }) {
       <div
         className="mb-4 flex items-center gap-3 px-4 py-3"
         style={{
-          borderRadius: "4px",
+          borderRadius: "8px",
           border: "1px solid var(--hsd-ui-color-green-200)",
           backgroundColor: "var(--hsd-ui-color-green-50)",
         }}
@@ -1899,7 +1899,7 @@ function InfoBanner({ submitted }: { submitted?: boolean }) {
     <div
       className="mb-4 px-4 py-3"
       style={{
-        borderRadius: "4px",
+        borderRadius: "8px",
         border: "1px solid var(--hsd-ui-color-navy-200)",
         backgroundColor: "var(--hsd-ui-color-navy-50)",
       }}
@@ -1923,7 +1923,7 @@ function SectionCard({ title, subtitle, action, children }: SectionCardProps) {
     <div
       className="bg-white"
       style={{
-        borderRadius: "4px",
+        borderRadius: "8px",
         border: "1px solid rgba(120, 134, 127, 0.2)",
       }}
     >
