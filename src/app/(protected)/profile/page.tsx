@@ -773,8 +773,8 @@ export default function CandidateProfilePage() {
                   >
                     <div className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center transition-all duration-200",
-                      isLocked ? "bg-muted/60 text-muted-foreground/40" : isActive ? "bg-accent text-white" : isCompleted ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
-                    )} style={{ borderRadius: "4px" }}>
+                      isLocked ? "bg-muted/60 text-muted-foreground/40" : isActive ? "text-white" : isCompleted ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
+                    )} style={{ borderRadius: "4px", ...(isActive && !isLocked ? { backgroundColor: "#001ed2" } : {}) }}>
                       {isLocked ? <Lock className="h-4 w-4" /> : isCompleted && !isActive ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                     </div>
                     <div className="min-w-0 flex-1">
