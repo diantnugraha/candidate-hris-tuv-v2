@@ -719,20 +719,11 @@ export default function CandidateProfilePage() {
       </header>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden border-b bg-white">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-accent/[0.03]" />
-          <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-accent/[0.04]" />
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--border)) 0.5px, transparent 0)`,
-              backgroundSize: "24px 24px",
-              opacity: 0.4,
-            }}
-          />
-        </div>
-        <div className="relative px-6 py-8 sm:px-8">
+      <div
+        className="bg-white"
+        style={{ borderBottom: "1px solid rgba(120, 134, 127, 0.2)" }}
+      >
+        <div className="px-6 py-8 sm:px-8">
           <div className="px-2">
             <div className="flex flex-col gap-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Candidate Application</p>
@@ -772,14 +763,18 @@ export default function CandidateProfilePage() {
                     onClick={() => goToStep(step.id)}
                     disabled={isLocked}
                     className={cn(
-                      "group flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left transition-all duration-200",
-                      isLocked ? "cursor-not-allowed opacity-50" : isActive ? "bg-white shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.04]" : "hover:bg-white/60"
+                      "group flex w-full items-center gap-3 px-3.5 py-3 text-left transition-all duration-200",
+                      isLocked ? "cursor-not-allowed opacity-50" : isActive ? "bg-white" : "hover:bg-white/60"
                     )}
+                    style={isActive && !isLocked ? {
+                      borderRadius: "4px",
+                      border: "1px solid rgba(120, 134, 127, 0.2)",
+                    } : { borderRadius: "4px" }}
                   >
                     <div className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
-                      isLocked ? "bg-muted/60 text-muted-foreground/40" : isActive ? "bg-accent text-white shadow-sm shadow-accent/30" : isCompleted ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
-                    )}>
+                      "flex h-9 w-9 shrink-0 items-center justify-center transition-all duration-200",
+                      isLocked ? "bg-muted/60 text-muted-foreground/40" : isActive ? "bg-accent text-white" : isCompleted ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
+                    )} style={{ borderRadius: "4px" }}>
                       {isLocked ? <Lock className="h-4 w-4" /> : isCompleted && !isActive ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -865,7 +860,7 @@ export default function CandidateProfilePage() {
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+                      <div className="flex items-center gap-3 rounded border border-emerald-200 bg-emerald-50 px-5 py-4">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                           <CheckCircle2 className="h-5 w-5" />
                         </div>
@@ -1259,7 +1254,7 @@ export default function CandidateProfilePage() {
 
                     {/* Interview Schedule Info */}
                     {(interviewData.interviewDate || interviewData.interviewType) && (
-                      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/80 px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-4 rounded border border-slate-200 bg-slate-50/80 px-5 py-4">
                         {interviewData.interviewDate && (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-200/70">
@@ -1289,7 +1284,7 @@ export default function CandidateProfilePage() {
 
                     {/* Overall Status */}
                     <div className={cn(
-                      "flex items-center gap-3 rounded-xl border px-5 py-3.5",
+                      "flex items-center gap-3 rounded border px-5 py-3.5",
                       interviewData.allPassed ? "border-emerald-200 bg-emerald-50" :
                       interviewData.anyFailed ? "border-red-200 bg-red-50" :
                       "border-blue-200 bg-blue-50"
@@ -1326,7 +1321,7 @@ export default function CandidateProfilePage() {
                         { label: "Interview 2", subtitle: "User Interview", icon: <UserCheck className="h-5 w-5" />, data: interviewData.interview2 },
                       ].map((stage) => (
                         <div key={stage.label} className={cn(
-                          "relative rounded-xl border p-5 transition-all",
+                          "relative rounded border p-5 transition-all",
                           stage.data.locked ? "border-border/40 bg-muted/20 opacity-50" :
                           stage.data.passed ? "border-emerald-200 bg-emerald-50/40" :
                           stage.data.failed ? "border-red-200 bg-red-50/40" :
@@ -1384,13 +1379,13 @@ export default function CandidateProfilePage() {
                   <div className="space-y-6">
                     {/* MCU Status Banner */}
                     <div className={cn(
-                      "flex items-center gap-4 rounded-xl border px-5 py-4",
+                      "flex items-center gap-4 rounded border px-5 py-4",
                       mcuData.status === "PASSED" ? "border-emerald-200 bg-emerald-50" :
                       mcuData.status === "FAILED" ? "border-red-200 bg-red-50" :
                       "border-amber-200 bg-amber-50"
                     )}>
                       <div className={cn(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded",
                         mcuData.status === "PASSED" ? "bg-emerald-100 text-emerald-600" :
                         mcuData.status === "FAILED" ? "bg-red-100 text-red-600" :
                         "bg-amber-100 text-amber-600"
@@ -1460,8 +1455,8 @@ export default function CandidateProfilePage() {
                 {onboardingData && <><SectionCard title="Onboarding Details" subtitle="Your onboarding information as assigned by HR">
                   <div className="space-y-6">
                     {/* Onboarding Status Banner */}
-                    <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <div className="flex items-center gap-4 rounded border border-emerald-200 bg-emerald-50 px-5 py-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-600">
                         <CheckCircle2 className="h-6 w-6" />
                       </div>
                       <div>
@@ -1481,7 +1476,7 @@ export default function CandidateProfilePage() {
                 <SectionCard title="Facilities" subtitle="Equipment and facilities assigned to you">
                   {onboardingData.facilities.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
+                      <div className="flex h-14 w-14 items-center justify-center rounded bg-muted/60">
                         <Package className="h-6 w-6 text-muted-foreground/60" />
                       </div>
                       <h3 className="mt-4 text-sm font-semibold text-foreground">No facilities assigned yet</h3>
@@ -1525,7 +1520,7 @@ export default function CandidateProfilePage() {
                 <SectionCard title="Onboarding Program" subtitle="Scheduled onboarding activities and training">
                     {onboardingData.programs.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
+                        <div className="flex h-14 w-14 items-center justify-center rounded bg-muted/60">
                           <BookOpen className="h-6 w-6 text-muted-foreground/60" />
                         </div>
                         <h3 className="mt-4 text-sm font-semibold text-foreground">No programs scheduled yet</h3>
@@ -1571,8 +1566,8 @@ export default function CandidateProfilePage() {
 
                 {/* Confirm & Accept Offer */}
                 {!isAccepted && (
-                  <div className="rounded-xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-accent/[0.02] p-6 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+                  <div className="rounded border border-accent/20 bg-accent/[0.03] p-6 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded bg-accent/10">
                       <HandshakeIcon className="h-7 w-7 text-accent" />
                     </div>
                     <h3 className="mt-4 text-lg font-semibold text-foreground">Ready to Join?</h3>
@@ -1581,7 +1576,7 @@ export default function CandidateProfilePage() {
                     </p>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button className="mt-5 gap-2 px-8" size="lg" disabled={isAccepting}>
+                        <Button className="mt-5 gap-2 px-8" size="lg" disabled={isAccepting} style={{ backgroundColor: "var(--hsd-ui-color-navy-500)", borderRadius: "4px" }}>
                           {isAccepting ? (<><Loader2 className="h-5 w-5 animate-spin" />Accepting...</>) : (<><CheckCircle2 className="h-5 w-5" />Confirm & Accept Offer</>)}
                         </Button>
                       </AlertDialogTrigger>
@@ -1604,8 +1599,8 @@ export default function CandidateProfilePage() {
                 )}
 
                 {isAccepted && (
-                  <div className="flex items-center gap-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-6 py-5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                  <div className="flex items-center gap-4 rounded border-2 border-emerald-200 bg-emerald-50 px-6 py-5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-600">
                       <CheckCircle2 className="h-6 w-6" />
                     </div>
                     <div>
@@ -1640,14 +1635,21 @@ export default function CandidateProfilePage() {
                       }}
                       disabled={isSaving}
                       className="h-8 border-amber-300 bg-white text-amber-700 hover:bg-amber-100"
+                      style={{ borderRadius: "4px" }}
                     >
                       {isSaving ? (<><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Saving...</>) : (<><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</>)}
                     </Button>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm shadow-black/[0.03] ring-1 ring-black/[0.04]">
-                  <Button type="button" variant="ghost" onClick={() => goToStep(currentStep - 1)} disabled={currentStep === 0 || (currentStep > 6 && !isStepAccessible(currentStep - 1))} className="gap-1.5">
+                <div
+                  className="flex items-center justify-between bg-white p-4"
+                  style={{
+                    borderRadius: "4px",
+                    border: "1px solid rgba(120, 134, 127, 0.2)",
+                  }}
+                >
+                  <Button type="button" variant="ghost" onClick={() => goToStep(currentStep - 1)} disabled={currentStep === 0 || (currentStep > 6 && !isStepAccessible(currentStep - 1))} className="gap-1.5" style={{ borderRadius: "4px" }}>
                     <ChevronLeft className="h-4 w-4" />Previous
                   </Button>
                   <div className="flex items-center gap-1.5">
@@ -1664,11 +1666,11 @@ export default function CandidateProfilePage() {
                     })}
                   </div>
                   {currentStep === 6 && !isSubmitted ? (
-                    <Button key="submit-btn" type="submit" disabled={isSubmitting || isSaving} className="gap-1.5">
+                    <Button key="submit-btn" type="submit" disabled={isSubmitting || isSaving} className="gap-1.5" style={{ backgroundColor: "var(--hsd-ui-color-navy-500)", borderColor: "var(--hsd-ui-color-navy-500)", borderRadius: "4px" }}>
                       {isSubmitting || isSaving ? (<><Loader2 className="h-4 w-4 animate-spin" />Submitting...</>) : (<><Save className="h-4 w-4" />Submit Application</>)}
                     </Button>
                   ) : currentStep < STEPS.length - 1 && isStepAccessible(currentStep + 1) ? (
-                    <Button key="next-btn" type="button" onClick={() => goToStep(currentStep + 1)} className="gap-1.5">
+                    <Button key="next-btn" type="button" onClick={() => goToStep(currentStep + 1)} className="gap-1.5" style={{ backgroundColor: "var(--hsd-ui-color-navy-500)", borderColor: "var(--hsd-ui-color-navy-500)", borderRadius: "4px" }}>
                       Next<ChevronRight className="h-4 w-4" />
                     </Button>
                   ) : (
@@ -1902,8 +1904,17 @@ interface SectionCardProps {
 
 function SectionCard({ title, subtitle, action, children }: SectionCardProps) {
   return (
-    <div className="rounded-xl bg-white shadow-sm shadow-black/[0.03] ring-1 ring-black/[0.04]">
-      <div className="flex items-start justify-between border-b border-border/60 px-6 py-5">
+    <div
+      className="bg-white"
+      style={{
+        borderRadius: "4px",
+        border: "1px solid rgba(120, 134, 127, 0.2)",
+      }}
+    >
+      <div
+        className="flex items-start justify-between px-6 py-5"
+        style={{ borderBottom: "1px solid rgba(120, 134, 127, 0.2)" }}
+      >
         <div>
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
@@ -1945,7 +1956,7 @@ interface EmptyStateProps {
 function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
+      <div className="flex h-14 w-14 items-center justify-center rounded bg-muted/60">
         <Icon className="h-6 w-6 text-muted-foreground/60" />
       </div>
       <h3 className="mt-4 text-sm font-semibold text-foreground">{title}</h3>
