@@ -139,7 +139,9 @@ Then run `npx prisma generate` (no migration needed — schema already reflects 
 
 ### Idempotency
 
-The transaction must be safe to retry. Pre-transaction guard: if `onboardingAcceptedAt` is already set OR if an `Employee` with the candidate's email already exists, throw `ConflictError("Onboarding already accepted")` before opening the transaction. The candidate UI handles 409 by reloading the onboarding state and showing the success screen.
+The transaction must be safe to retry.
+
+1. **Pre-transaction guard:** if `onboardingAcceptedAt` is already set OR if an `Employee` with the candidate's email already exists, throw `ConflictError("Onboarding already accepted")` before opening the transaction. The candidate UI handles 409 by reloading the onboarding state and showing the success screen.
 
 ### Repository pattern compliance (recruitment-hris-api/CLAUDE.md)
 
