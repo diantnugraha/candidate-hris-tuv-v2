@@ -1486,25 +1486,21 @@ export default function CandidateProfilePage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-10 text-center">#</TableHead>
-                            <TableHead>Items</TableHead>
-                            <TableHead className="w-20">Qty</TableHead>
-                            <TableHead className="w-20">Unit</TableHead>
-                            <TableHead>Inventory No</TableHead>
-                            <TableHead>Condition</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead style={{ paddingLeft: 32, paddingRight: 32 }}>Items</TableHead>
+                            <TableHead style={{ paddingLeft: 32, paddingRight: 32, width: 100 }}>Qty</TableHead>
+                            <TableHead style={{ paddingLeft: 32, paddingRight: 32, width: 100 }}>Unit</TableHead>
+                            <TableHead style={{ paddingLeft: 32, paddingRight: 32 }}>Condition</TableHead>
+                            <TableHead style={{ paddingLeft: 32, paddingRight: 32 }}>Status</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {onboardingData.facilities.map((facility) => (
                             <TableRow key={facility.id}>
-                              <TableCell className="text-center text-muted-foreground font-medium">{facility.id}</TableCell>
-                              <TableCell className="font-medium">{facility.item}</TableCell>
-                              <TableCell>{facility.qty}</TableCell>
-                              <TableCell>{facility.unit}</TableCell>
-                              <TableCell>{facility.inventoryNo}</TableCell>
-                              <TableCell>{facility.condition}</TableCell>
-                              <TableCell>
+                              <TableCell className="font-medium" style={{ paddingLeft: 32, paddingRight: 32 }}>{facility.item}</TableCell>
+                              <TableCell style={{ paddingLeft: 32, paddingRight: 32 }}>{facility.qty}</TableCell>
+                              <TableCell style={{ paddingLeft: 32, paddingRight: 32 }}>{facility.unit}</TableCell>
+                              <TableCell style={{ paddingLeft: 32, paddingRight: 32 }}>{facility.condition}</TableCell>
+                              <TableCell style={{ paddingLeft: 32, paddingRight: 32 }}>
                                 <Badge variant="outline" className="capitalize">{facility.status}</Badge>
                               </TableCell>
                             </TableRow>
@@ -1530,7 +1526,6 @@ export default function CandidateProfilePage() {
                         <Table>
                           <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-10 text-center">#</TableHead>
                               <TableHead>Program</TableHead>
                               <TableHead>Date</TableHead>
                               <TableHead>Location</TableHead>
@@ -1541,7 +1536,6 @@ export default function CandidateProfilePage() {
                           <TableBody>
                             {onboardingData.programs.map((program) => (
                               <TableRow key={program.id}>
-                                <TableCell className="text-center text-muted-foreground font-medium">{program.id}</TableCell>
                                 <TableCell className="font-medium">{program.program}</TableCell>
                                 <TableCell>{program.date}</TableCell>
                                 <TableCell>{program.location}</TableCell>
@@ -1588,7 +1582,14 @@ export default function CandidateProfilePage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel disabled={isAccepting}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleAcceptOffer} disabled={isAccepting}>
+                          <AlertDialogAction
+                            onClick={handleAcceptOffer}
+                            disabled={isAccepting}
+                            style={{
+                              backgroundColor: "var(--hsd-ui-color-navy-500)",
+                              borderColor: "var(--hsd-ui-color-navy-500)",
+                            }}
+                          >
                             Yes, I Accept
                           </AlertDialogAction>
                         </AlertDialogFooter>

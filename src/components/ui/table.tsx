@@ -142,7 +142,7 @@ TableHead.displayName = "TableHead";
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, style: propStyle, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
@@ -154,6 +154,7 @@ const TableCell = React.forwardRef<
       fontSize: "0.875rem",
       padding: "16px 8px 16px 16px",
       color: "var(--hsd-ui-color-gray-900)",
+      ...propStyle,
     }}
     {...props}
   />
