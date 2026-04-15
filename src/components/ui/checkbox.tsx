@@ -12,7 +12,7 @@ const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, style, checked, ...props }, ref) => {
-  const isChecked = checked === true || props["data-state"] === "checked";
+  const isChecked = checked === true;
 
   return (
     <CheckboxPrimitive.Root
